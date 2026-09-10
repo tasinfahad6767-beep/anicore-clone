@@ -41,7 +41,7 @@ export default function Home() {
       <IndexStrip stats={stats} />
       <TrendingTrack items={trending} />
       <SpotlightPicks items={topRated} />
-      <MotionFeature stats={stats} />
+      <MotionFeature items={topRated} stats={stats} />
       <FanPulse airing={airing} upcoming={upcoming} />
       <SeasonSection season={seasonStr} items={latestSeason} />
       <BrowseSection initialItems={browseInitial.items} total={browseInitial.pageInfo.total} genres={genres} />
