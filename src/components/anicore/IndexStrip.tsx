@@ -31,7 +31,7 @@ export function IndexStrip({ stats }: { stats: Stats }) {
         <strong>{fmt(stats.characterCount)}</strong>
       </div>
       <div>
-        <span>Cross-source matches</span>
+        <span>Source matches</span>
         <strong>5-way</strong>
       </div>
       <div className="strip-status">

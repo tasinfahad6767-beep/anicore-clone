@@ -12,9 +12,9 @@ export function DatasetSection({ stats }: { stats: Stats }) {
       <div className="dataset-copy">
         <p className="section-kicker">Why AniCore</p>
         <h2>Five viewpoints.<br />One defensible record.</h2>
-        <p>Anime data is messy: seasons split, titles vary, episode counts disagree. AniCore keeps the disagreements visible while resolving them into one useful entry.</p>
+        <p>Anime metadata is fragmented across providers. AniCore unifies them into one canonical record while keeping the source trail visible.</p>
         <Link href="/lab" className="outline-action" style={{ textDecoration: 'none' }}>
-          Explore the API Lab <ArrowRight className="w-4 h-4" />
+          Explore the developer lab <ArrowRight className="w-4 h-4" />
         </Link>
       </div>
 

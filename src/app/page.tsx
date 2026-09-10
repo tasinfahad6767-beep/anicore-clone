@@ -1,6 +1,7 @@
 import { HeroSpotlight } from '@/components/anicore/HeroSpotlight';
 import { IndexStrip } from '@/components/anicore/IndexStrip';
 import { TrendingTrack } from '@/components/anicore/TrendingTrack';
+import { SpotlightPicks } from '@/components/anicore/SpotlightPicks';
 import { MotionFeature } from '@/components/anicore/MotionFeature';
 import { FanPulse } from '@/components/anicore/FanPulse';
 import { SeasonSection } from '@/components/anicore/SeasonSection';
@@ -39,6 +40,7 @@ export default function Home() {
       <HeroSpotlight items={trending.slice(0, 7)} totalAnime={stats.animeCount} />
       <IndexStrip stats={stats} />
       <TrendingTrack items={trending} />
+      <SpotlightPicks items={topRated} />
       <MotionFeature stats={stats} />
       <FanPulse airing={airing} upcoming={upcoming} />
       <SeasonSection season={seasonStr} items={latestSeason} />

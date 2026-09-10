@@ -15,8 +15,8 @@ export function TrendingTrack({ items, viewAllHref = '/library?sort=trending' }:
     <section className="content-section trending-section" id="discover">
       <div className="section-heading">
         <div>
-          <p className="section-kicker">Live signal / updated now</p>
-          <h2>Trending across the index</h2>
+          <p className="section-kicker">Live signal / real-time</p>
+          <h2>Trending across the archive</h2>
         </div>
         <Link href={viewAllHref} className="text-action" style={{ textDecoration: 'none' }}>
           <button type="button" style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', font: 'inherit', color: 'inherit' }}>

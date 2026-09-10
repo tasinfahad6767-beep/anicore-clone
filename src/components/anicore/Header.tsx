@@ -112,7 +112,7 @@ export function Header() {
           <span className="brand-mark">A</span>
           <span>
             <strong>AniCore</strong>
-            <small>the living index</small>
+            <small>the anime archive</small>
           </span>
         </Link>
 

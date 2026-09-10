@@ -21,10 +21,10 @@ export function Footer({ stats }: { stats?: Stats }) {
           <span className="brand-mark">A</span>
           <span>
             <strong>AniCore</strong>
-            <small>the living index</small>
+            <small>the anime archive</small>
           </span>
         </Link>
-        <p>One traceable anime record, resolved across the databases fans and developers already use.</p>
+        <p>One unified anime record, resolved across five independent databases. Self-hosted, fast, no ads.</p>
         <a className="footer-email" href="mailto:hello@anicore.local">hello@anicore.local</a>
       </div>
 

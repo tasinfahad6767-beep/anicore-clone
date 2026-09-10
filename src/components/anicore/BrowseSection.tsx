@@ -53,10 +53,10 @@ export function BrowseSection({ initialItems, total, genres }: Props) {
     <section className="browse-section" id="browse" aria-busy={loading}>
       <div className="section-heading browse-heading">
         <div>
-          <p className="section-kicker">Advanced discovery</p>
-          <h2>Tune the signal</h2>
+          <p className="section-kicker">Full catalog</p>
+          <h2>Filter the catalog</h2>
         </div>
-        <p>Filter the whole index, not a hand-picked shelf.</p>
+        <p>Sort, filter, and search the entire catalog.</p>
       </div>
 
       <FilterPanel

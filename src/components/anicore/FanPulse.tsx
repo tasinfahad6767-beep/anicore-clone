@@ -16,9 +16,9 @@ export function FanPulse({ airing, upcoming }: Props) {
       <div className="section-heading">
         <div>
           <p className="section-kicker">Fan radar / what is moving</p>
-          <h2>Your weekly anime pulse</h2>
+          <h2>The weekly pulse</h2>
         </div>
-        <p>Jump straight into shows airing now or scout the next wave before it lands.</p>
+        <p>Currently airing series and upcoming premieres, ranked by community signals.</p>
       </div>
       <div className="pulse-columns">
         {airing.length > 0 && (

@@ -70,7 +70,7 @@ export function HeroSpotlight({ items, totalAnime }: Props) {
       {/* Content column */}
       <div className="hero-content" aria-live="polite">
         <p className="hero-kicker">
-          <span>This week / {String(idx + 1).padStart(2, '0')}</span> trending across the index
+          <span>This week / {String(idx + 1).padStart(2, '0')}</span> spotlight across the archive
         </p>
         <h1 className={`hero-weekly-title ${titleLong ? 'is-long' : ''}`}>
           {a.title_english || a.title}
@@ -118,7 +118,7 @@ export function HeroSpotlight({ items, totalAnime }: Props) {
           </Link>
           <Link href="/library" style={{ textDecoration: 'none' }}>
             <button type="button">
-              Browse the full catalog <ArrowRight className="w-3.5 h-3.5" />
+              Enter the catalog <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </Link>
         </div>
@@ -139,7 +139,7 @@ export function HeroSpotlight({ items, totalAnime }: Props) {
       <Link href={`/anime/${a.slug}`} className="hero-feature" style={{ textDecoration: 'none' }}>
         <span className="feature-index">Weekly / {String(idx + 1).padStart(2, '0')}</span>
         <div>
-          <small>Open this week&apos;s full record</small>
+          <small>Open the spotlight record</small>
           <strong>{a.title_english || a.title}</strong>
           {a.title_native && <span>{a.title_native}</span>}
         </div>

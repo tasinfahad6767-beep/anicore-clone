@@ -17,8 +17,8 @@ export function MotionFeature({ stats }: { stats: Stats }) {
     <section className="motion-feature discovery-motion" aria-labelledby="living-catalog-title">
       <div className="motion-feature-copy">
         <p className="section-kicker">Dimensional discovery</p>
-        <h2 id="living-catalog-title">The catalog has depth.</h2>
-        <p>Every poster is more than an image. It opens into episodes, people, relations, provider records, artwork, trailers, and the community trail around a title.</p>
+        <h2 id="living-catalog-title">Every record has depth.</h2>
+        <p>Every poster is more than an image. It opens into episodes, characters, relations, provider records, artwork, trailers, and the community trail around a title — unified across five independent sources.</p>
         <div className="motion-feature-tags" aria-label="Anime record dimensions">
           <span>{stats.animeCount.toLocaleString()} titles</span>
           <span>5 providers</span>
