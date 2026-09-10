@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
-import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import type { Anime, Episode } from '@/lib/anicore/db';
 
 interface ScheduleItem {
@@ -11,21 +11,16 @@ interface ScheduleItem {
   dayKey: string;
   dayLabel: string;
   dayName: string;
+  relTag: string;
   isToday: boolean;
   isPast: boolean;
   isFuture: boolean;
 }
 
-function fmt(n: number): string {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
-  return String(n);
-}
-
 export default function SchedulePage() {
   const [airing, setAiring] = useState<Anime[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedDay, setSelectedDay] = useState<string>('all');
+  const [selectedDay, setSelectedDay] = useState<string>('');
 
   useEffect(() => {
     fetch('/api/airing?perPage=100').then(r => r.json()).then(d => {
@@ -34,7 +29,6 @@ export default function SchedulePage() {
     }).catch(() => setLoading(false));
   }, []);
 
-  // Build 15-day window: 7 past, today, 7 future — must run before any early return
   const days = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -48,12 +42,17 @@ export default function SchedulePage() {
       const isFuture = i > 0;
       const dayName = d.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
       const dayLabel = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-      arr.push({ date: d, dayKey, dayName, dayLabel, isToday, isPast, isFuture, offset: i });
+      let relTag: string;
+      if (i === 0) relTag = 'TODAY';
+      else if (i === -1) relTag = 'Yesterday';
+      else if (i === 1) relTag = 'Tomorrow';
+      else if (i < 0) relTag = `${i}d`;
+      else relTag = `+${i}d`;
+      arr.push({ date: d, dayKey, dayName, dayLabel, isToday, isPast, isFuture, relTag });
     }
     return arr;
   }, []);
 
-  // Mock episode schedule
   const scheduleItems: ScheduleItem[] = useMemo(() => {
     if (!airing.length) return [];
     return airing.flatMap(a => {
@@ -77,6 +76,7 @@ export default function SchedulePage() {
           dayKey: day.dayKey,
           dayLabel: day.dayLabel,
           dayName: day.dayName,
+          relTag: day.relTag,
           isToday: day.isToday,
           isPast: day.isPast,
           isFuture: day.isFuture,
@@ -95,9 +95,14 @@ export default function SchedulePage() {
   const todaysEps = scheduleItems.filter(s => s.isToday);
   const windowTotal = scheduleItems.length;
 
-  const filteredItems = selectedDay === 'all'
-    ? scheduleItems
+  const filteredItems = !selectedDay
+    ? todaysEps.length > 0 ? todaysEps : scheduleItems
     : scheduleItems.filter(s => s.dayKey === selectedDay);
+
+  const selectedDayObj = days.find(d => d.dayKey === selectedDay);
+  const viewLabel = !selectedDay
+    ? `Today's Broadcasts (${new Date().toISOString().slice(0, 10)})`
+    : `${selectedDayObj?.dayName} ${selectedDayObj?.dayLabel}`;
 
   return (
     <div className="inner-page schedule-page">
@@ -105,6 +110,8 @@ export default function SchedulePage() {
       <section className="page-hero schedule-hero">
         <div className="schedule-hero-content">
           <div className="schedule-hero-beacon">
+            <span className="live-dot"></span>
+            <span className="live-dot-ping"></span>
             <span className="beacon-text">BROADCAST TIMETABLE · 15-DAY WINDOW</span>
           </div>
           <h1>Airing <em>Schedule.</em></h1>
@@ -135,29 +142,38 @@ export default function SchedulePage() {
         </button>
         <div className="schedule-timeline-rail" aria-label="15-Day Date Navigation">
           <div className="timeline-rail-scroll">
-            <button type="button" className={`timeline-day-chip all-chip ${selectedDay === 'all' ? 'active' : ''}`}
-              onClick={() => setSelectedDay('all')}>
+            <button type="button" className={`timeline-day-chip all-chip ${!selectedDay ? 'active' : ''}`}
+              onClick={() => setSelectedDay('')}>
               <div className="day-top">
                 <span className="day-name">WINDOW</span>
                 <span className="day-rel-tag">15D</span>
               </div>
               <strong className="day-date">All Days</strong>
-              <span className="day-count-badge">{windowTotal} eps</span>
+              <span className="day-count-badge badge-has-eps">{windowTotal} eps</span>
             </button>
             {days.map(d => {
               const count = scheduleItems.filter(s => s.dayKey === d.dayKey).length;
+              const active = selectedDay === d.dayKey;
               return (
                 <button key={d.dayKey} type="button"
-                  className={`timeline-day-chip ${d.isToday ? 'today-chip' : ''} ${d.isPast ? 'past-chip' : ''} ${d.isFuture ? 'future-chip' : ''} ${selectedDay === d.dayKey ? 'active' : ''}`}
-                  onClick={() => setSelectedDay(selectedDay === d.dayKey ? 'all' : d.dayKey)}>
+                  className={`timeline-day-chip ${d.isToday ? 'today-chip' : ''} ${d.isPast ? 'past-chip' : ''} ${d.isFuture ? 'future-chip' : ''} ${active ? 'active' : ''}`}
+                  onClick={() => setSelectedDay(active ? '' : d.dayKey)}>
                   <div className="day-top">
                     <span className="day-name">{d.dayName}</span>
-                    {d.isToday && <span className="day-rel-tag today">TODAY</span>}
-                    {d.isPast && <span className="day-rel-tag past">PAST</span>}
-                    {d.isFuture && <span className="day-rel-tag future">NEXT</span>}
+                    {d.isToday ? (
+                      <span className="today-live-tag">
+                        <span className="live-dot"></span>
+                        TODAY
+                      </span>
+                    ) : (
+                      <span className="day-rel-tag">{d.relTag}</span>
+                    )}
                   </div>
                   <strong className="day-date">{d.dayLabel}</strong>
-                  <span className="day-count-badge">{count} eps</span>
+                  <span className={`day-count-badge ${d.isToday ? 'badge-today' : count > 0 ? 'badge-has-eps' : ''}`}>
+                    {count} eps
+                  </span>
+                  {active && <i className="chip-active-bar"></i>}
                 </button>
               );
             })}
@@ -173,7 +189,17 @@ export default function SchedulePage() {
       </section>
 
       {/* Schedule grid */}
-      <section className="schedule-grid-wrapper">
+      <section className="schedule-grid-section">
+        <div className="schedule-section-header">
+          <div>
+            <span className="schedule-view-label">{selectedDay ? 'Day Filter' : 'Today'}</span>
+            <h2>{viewLabel}</h2>
+          </div>
+          <span style={{ fontFamily: 'var(--utility)', fontSize: 10, color: 'var(--ink-soft)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+            {filteredItems.length} episodes
+          </span>
+        </div>
+
         {filteredItems.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '64px 0', color: 'var(--ink-soft)' }}>
             <p style={{ fontSize: 14 }}>No episodes scheduled for this filter.</p>
@@ -182,34 +208,53 @@ export default function SchedulePage() {
             </Link>
           </div>
         ) : (
-          <div className="schedule-grid">
-            {filteredItems.map((s, i) => (
-              <Link key={`${s.anime.id}-${s.episode.number}-${i}`} href={`/anime/${s.anime.slug}`}
-                className={`schedule-card ${s.isToday ? 'card-today' : ''} ${s.isPast ? 'card-past' : ''} ${s.isFuture ? 'card-future' : ''}`}
-                style={{ textDecoration: 'none' }}>
-                <div className="schedule-card-poster">
-                  {s.anime.poster_url && <img src={s.anime.poster_url} alt="" loading="lazy" />}
-                  <div className="schedule-card-ep-num">EP {s.episode.number}</div>
-                </div>
-                <div className="schedule-card-body">
-                  <div className="schedule-card-date">
-                    <span className="day-name">{s.dayName}</span>
-                    <span className="day-date">{s.dayLabel}</span>
-                    {s.isToday && <span className="today-pill">TODAY</span>}
-                  </div>
-                  <strong className="schedule-card-title">{s.anime.title_english || s.anime.title}</strong>
-                  <div className="schedule-card-meta">
-                    <span>{s.anime.format || 'TV'}</span>
-                    {s.anime.score_average && (
-                      <span className="schedule-card-score">
-                        <strong>{Math.round(s.anime.score_average)}</strong>
-                        <small>/100</small>
-                      </span>
+          <div className="schedule-card-grid">
+            {filteredItems.map((s, i) => {
+              const title = s.anime.title_english || s.anime.title;
+              const genres = (s.anime.genres || []).slice(0, 1).map((g: any) => typeof g === 'string' ? g : (g?.name || ''));
+              return (
+                <Link key={`${s.anime.id}-${s.episode.number}-${i}`} href={`/anime/${s.anime.slug}`}
+                  className={`schedule-card ${s.isToday ? 'card-today' : ''}`}>
+                  <div className="schedule-thumb-box">
+                    <div className="schedule-thumb-backdrop-placeholder">
+                      <span className="placeholder-format">{s.anime.format || 'TV'}</span>
+                      <span className="placeholder-title">{title}</span>
+                    </div>
+                    {s.anime.banner_url && (
+                      <img src={s.anime.banner_url} alt="" className="schedule-thumb-fallback" loading="lazy" />
+                    )}
+                    <div className="schedule-thumb-overlay">
+                      <span className="ep-num-pill">EP {s.episode.number}</span>
+                      <span className="ep-runtime-pill">{s.episode.runtime_minutes || 24}m</span>
+                    </div>
+                    {s.isToday && (
+                      <span className="air-status-tag status-today">● AIRING TODAY</span>
                     )}
                   </div>
-                </div>
-              </Link>
-            ))}
+                  <div className="schedule-card-body">
+                    <div className="card-top-meta">
+                      <span className="card-format">{s.anime.format || 'TV'}</span>
+                      {s.anime.score_average && (
+                        <span className="card-score">★ {(s.anime.score_average).toFixed(1)}%</span>
+                      )}
+                    </div>
+                    <h3 className="card-anime-title" title={title}>{title}</h3>
+                    {s.anime.title_native && (
+                      <span className="card-native-title">{s.anime.title_native}</span>
+                    )}
+                    <p className="card-ep-title">{s.episode.title}</p>
+                    <div className="card-bottom-meta">
+                      <span className="card-date-str">
+                        {s.dayName} · {s.dayLabel}
+                      </span>
+                      {genres.length > 0 && (
+                        <span className="card-genre-pill">{genres[0]}</span>
+                      )}
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         )}
       </section>

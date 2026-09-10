@@ -7,6 +7,7 @@ import { FanPulse } from '@/components/anicore/FanPulse';
 import { HeroSpotlight } from '@/components/anicore/HeroSpotlight';
 import { IndexStrip } from '@/components/anicore/IndexStrip';
 import { SeasonSection } from '@/components/anicore/SeasonSection';
+import { MotionFeature } from '@/components/anicore/MotionFeature';
 import type { Anime } from '@/lib/anicore/db';
 
 interface Stats {
@@ -19,6 +20,8 @@ export default function SeasonPage() {
     items: Anime[]; airing: Anime[]; upcoming: Anime[];
   } | null>(null);
   const [trending, setTrending] = useState<Anime[]>([]);
+  const [popular, setPopular] = useState<Anime[]>([]);
+  const [topRated, setTopRated] = useState<Anime[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -29,6 +32,8 @@ export default function SeasonPage() {
     ]).then(([seasonData, homeData]) => {
       setData(seasonData);
       setTrending(homeData.trending || []);
+      setPopular(homeData.popular || []);
+      setTopRated(homeData.topRated || []);
       setStats(homeData.stats || null);
       setLoading(false);
     }).catch(() => setLoading(false));
@@ -47,11 +52,56 @@ export default function SeasonPage() {
 
       {stats && <IndexStrip stats={stats} />}
 
+      {/* Season spotlight */}
       <SeasonSection season={data.season} items={data.items} />
 
+      {/* Motion feature */}
+      {stats && <MotionFeature stats={stats} />}
+
+      {/* Currently airing + upcoming */}
       <FanPulse airing={data.airing} upcoming={data.upcoming} />
 
-      {/* Extra "Browse full season" CTA */}
+      {/* Most popular this season */}
+      {popular.length > 0 && (
+        <section className="content-section" id="popular">
+          <div className="section-heading">
+            <div>
+              <p className="section-kicker">All-time favorites</p>
+              <h2>Most popular.</h2>
+            </div>
+            <p style={{ color: 'var(--ink-soft)', lineHeight: 1.7, maxWidth: 420 }}>
+              The titles that never leave the conversation, ranked by MAL members.
+            </p>
+          </div>
+          <div className="trending-track">
+            {popular.slice(0, 10).map((a, i) => (
+              <AnimeCard key={`pop-${a.id}-${i}`} anime={a} rank={i + 1} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Top rated */}
+      {topRated.length > 0 && (
+        <section className="content-section" id="top-rated">
+          <div className="section-heading">
+            <div>
+              <p className="section-kicker">Critical consensus</p>
+              <h2>Top rated.</h2>
+            </div>
+            <p style={{ color: 'var(--ink-soft)', lineHeight: 1.7, maxWidth: 420 }}>
+              The highest-scored titles across the unified index.
+            </p>
+          </div>
+          <div className="trending-track">
+            {topRated.slice(0, 10).map((a, i) => (
+              <AnimeCard key={`top-${a.id}-${i}`} anime={a} rank={i + 1} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Browse CTA */}
       <section style={{ maxWidth: 'var(--page)', margin: '0 auto', padding: '80px 40px', textAlign: 'center' }}>
         <p className="section-kicker">Explore deeper</p>
         <h2 style={{ fontFamily: 'var(--display)', fontSize: 'clamp(36px, 4vw, 60px)', letterSpacing: '-0.065em', lineHeight: 1.03, margin: '0 0 18px' }}>
