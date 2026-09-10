@@ -161,6 +161,19 @@ export function parseAnime(row: any): Anime {
   };
 }
 
+// ===================== IN-MEMORY CACHE =====================
+// TTL cache for expensive queries that don't change often
+const cache = new Map<string, { data: any; expires: number }>();
+const DEFAULT_TTL = 60_000; // 60 seconds
+
+function cached<T>(key: string, fn: () => T, ttl: number = DEFAULT_TTL): T {
+  const hit = cache.get(key);
+  if (hit && hit.expires > Date.now()) return hit.data as T;
+  const data = fn();
+  cache.set(key, { data, expires: Date.now() + ttl });
+  return data;
+}
+
 // ===================== QUERIES =====================
 export function getAnimeBySlug(slug: string) {
   const db = getDb();
@@ -272,45 +285,57 @@ export function listAnime(opts: {
 }
 
 export function getTrending(limit = 12) {
-  const db = getDb();
-  return db.prepare(
-    `SELECT * FROM anime WHERE banner_url IS NOT NULL AND anilist_popularity IS NOT NULL ORDER BY anilist_popularity DESC LIMIT ?`
-  ).all(limit).map(parseAnime);
+  return cached(`trending:${limit}`, () => {
+    const db = getDb();
+    return db.prepare(
+      `SELECT * FROM anime WHERE banner_url IS NOT NULL AND anilist_popularity IS NOT NULL ORDER BY anilist_popularity DESC LIMIT ?`
+    ).all(limit).map(parseAnime);
+  });
 }
 
 export function getPopular(limit = 20) {
-  const db = getDb();
-  return db.prepare(
-    `SELECT * FROM anime WHERE mal_members IS NOT NULL ORDER BY mal_members DESC LIMIT ?`
-  ).all(limit).map(parseAnime);
+  return cached(`popular:${limit}`, () => {
+    const db = getDb();
+    return db.prepare(
+      `SELECT * FROM anime WHERE mal_members IS NOT NULL ORDER BY mal_members DESC LIMIT ?`
+    ).all(limit).map(parseAnime);
+  });
 }
 
 export function getTopRated(limit = 20) {
-  const db = getDb();
-  return db.prepare(
-    `SELECT * FROM anime WHERE score_average IS NOT NULL ORDER BY score_average DESC LIMIT ?`
-  ).all(limit).map(parseAnime);
+  return cached(`topRated:${limit}`, () => {
+    const db = getDb();
+    return db.prepare(
+      `SELECT * FROM anime WHERE score_average IS NOT NULL ORDER BY score_average DESC LIMIT ?`
+    ).all(limit).map(parseAnime);
+  });
 }
 
 export function getNewest(limit = 20) {
-  const db = getDb();
-  return db.prepare(
-    `SELECT * FROM anime WHERE season_year IS NOT NULL ORDER BY season_year DESC, season DESC LIMIT ?`
-  ).all(limit).map(parseAnime);
+  return cached(`newest:${limit}`, () => {
+    const db = getDb();
+    return db.prepare(
+      `SELECT * FROM anime WHERE season_year IS NOT NULL ORDER BY season_year DESC, season DESC LIMIT ?`
+    ).all(limit).map(parseAnime);
+  });
 }
 
 export function getAiring(limit = 30) {
-  const db = getDb();
-  return db.prepare(
-    `SELECT * FROM anime WHERE status = 'RELEASING' ORDER BY anilist_popularity DESC LIMIT ?`
-  ).all(limit).map(parseAnime);
+  return cached(`airing:${limit}`, () => {
+    const db = getDb();
+    return db.prepare(
+      `SELECT * FROM anime WHERE status = 'RELEASING' ORDER BY anilist_popularity DESC LIMIT ?`
+    ).all(limit).map(parseAnime);
+  }, 30_000); // shorter TTL for airing (changes more often)
 }
 
 export function getUpcoming(limit = 20) {
-  const db = getDb();
-  return db.prepare(
-    `SELECT * FROM anime WHERE status = 'NOT_YET_RELEASED' ORDER BY season_year ASC, season ASC LIMIT ?`
-  ).all(limit).map(parseAnime);
+  return cached(`upcoming:${limit}`, () => {
+    const db = getDb();
+    return db.prepare(
+      `SELECT * FROM anime WHERE status = 'NOT_YET_RELEASED' ORDER BY season_year ASC, season ASC LIMIT ?`
+    ).all(limit).map(parseAnime);
+  });
 }
 
 export function getByYear(year: number, limit = 24) {
@@ -321,11 +346,12 @@ export function getByYear(year: number, limit = 24) {
 }
 
 export function getLatestSeason(limit = 24) {
-  const db = getDb();
-  // Find the most recent season_year that has anime, return them sorted by popularity
-  return db.prepare(
-    `SELECT * FROM anime WHERE season_year = (SELECT MAX(season_year) FROM anime WHERE season_year IS NOT NULL AND season_year <= strftime('%Y', 'now') + 1) ORDER BY anilist_popularity DESC NULLS LAST LIMIT ?`
-  ).all(limit).map(parseAnime);
+  return cached(`latestSeason:${limit}`, () => {
+    const db = getDb();
+    return db.prepare(
+      `SELECT * FROM anime WHERE season_year = (SELECT MAX(season_year) FROM anime WHERE season_year IS NOT NULL AND season_year <= strftime('%Y', 'now') + 1) ORDER BY anilist_popularity DESC NULLS LAST LIMIT ?`
+    ).all(limit).map(parseAnime);
+  });
 }
 
 export function getTopByGenre(genre: string, limit = 12) {
@@ -337,40 +363,57 @@ export function getTopByGenre(genre: string, limit = 12) {
 }
 
 export function getGenreStats(): Array<{ genre: string; count: number }> {
-  const db = getDb();
-  const rows = db.prepare(`SELECT genres FROM anime WHERE genres IS NOT NULL`).all() as any[];
-  const counts = new Map<string, number>();
-  for (const r of rows) {
-    let arr: any[] = [];
-    if (typeof r.genres === 'string') { try { arr = JSON.parse(r.genres); } catch {} }
-    else if (Array.isArray(r.genres)) arr = r.genres;
-    for (const g of arr) {
-      const name = typeof g === 'string' ? g : (g?.name || '');
-      if (name) counts.set(name, (counts.get(name) || 0) + 1);
+  return cached('genreStats', () => {
+    const db = getDb();
+    const rows = db.prepare(`SELECT genres FROM anime WHERE genres IS NOT NULL`).all() as any[];
+    const counts = new Map<string, number>();
+    for (const r of rows) {
+      let arr: any[] = [];
+      if (typeof r.genres === 'string') { try { arr = JSON.parse(r.genres); } catch {} }
+      else if (Array.isArray(r.genres)) arr = r.genres;
+      for (const g of arr) {
+        const name = typeof g === 'string' ? g : (g?.name || '');
+        if (name) counts.set(name, (counts.get(name) || 0) + 1);
+      }
     }
-  }
-  return Array.from(counts.entries())
-    .map(([genre, count]) => ({ genre, count }))
-    .sort((a, b) => b.count - a.count);
+    return Array.from(counts.entries())
+      .map(([genre, count]) => ({ genre, count }))
+      .sort((a, b) => b.count - a.count);
+  }, 300_000); // 5 minutes
 }
 
 export function getYearDistribution(): Array<{ year: number; count: number }> {
-  const db = getDb();
-  return db.prepare(
-    `SELECT season_year as year, COUNT(*) as count FROM anime WHERE season_year IS NOT NULL GROUP BY season_year ORDER BY season_year DESC LIMIT 30`
-  ).all() as Array<{ year: number; count: number }>;
+  return cached('yearDist', () => {
+    const db = getDb();
+    return db.prepare(
+      `SELECT season_year as year, COUNT(*) as count FROM anime WHERE season_year IS NOT NULL GROUP BY season_year ORDER BY season_year DESC LIMIT 30`
+    ).all() as Array<{ year: number; count: number }>;
+  }, 300_000);
+}
+
+export function getStats() {
+  return cached('stats', () => {
+    const db = getDb();
+    const animeCount = (db.prepare('SELECT COUNT(*) as c FROM anime').get() as any)?.c ?? 0;
+    const episodeCount = (db.prepare('SELECT COUNT(*) as c FROM episodes').get() as any)?.c ?? 0;
+    const characterCount = (db.prepare('SELECT COUNT(*) as c FROM characters').get() as any)?.c ?? 0;
+    const releasingCount = (db.prepare(`SELECT COUNT(*) as c FROM anime WHERE status = 'RELEASING'`).get() as any)?.c ?? 0;
+    return { animeCount, episodeCount, characterCount, releasingCount };
+  }, 30_000); // 30s — stats change as scraper runs
 }
 
 export function getDistinctGenres(): string[] {
-  const db = getDb();
-  const rows = db.prepare(`SELECT DISTINCT genres FROM anime WHERE genres IS NOT NULL`).all() as any[];
-  const set = new Set<string>();
-  for (const r of rows) {
-    for (const g of parseGenres(r.genres)) {
-      set.add(g);
+  return cached('distinctGenres', () => {
+    const db = getDb();
+    const rows = db.prepare(`SELECT DISTINCT genres FROM anime WHERE genres IS NOT NULL`).all() as any[];
+    const set = new Set<string>();
+    for (const r of rows) {
+      for (const g of parseGenres(r.genres)) {
+        set.add(g);
+      }
     }
-  }
-  return Array.from(set).sort();
+    return Array.from(set).sort();
+  }, 300_000); // 5 minutes — genres rarely change
 }
 
 export function getDistinctYears(): number[] {
@@ -394,13 +437,4 @@ export function getRandomAnime(limit = 1) {
   return db.prepare(
     `SELECT * FROM anime WHERE poster_url IS NOT NULL ORDER BY RANDOM() LIMIT ?`
   ).all(limit).map(parseAnime);
-}
-
-export function getStats() {
-  const db = getDb();
-  const animeCount = (db.prepare('SELECT COUNT(*) as c FROM anime').get() as any)?.c ?? 0;
-  const episodeCount = (db.prepare('SELECT COUNT(*) as c FROM episodes').get() as any)?.c ?? 0;
-  const characterCount = (db.prepare('SELECT COUNT(*) as c FROM characters').get() as any)?.c ?? 0;
-  const releasingCount = (db.prepare(`SELECT COUNT(*) as c FROM anime WHERE status = 'RELEASING'`).get() as any)?.c ?? 0;
-  return { animeCount, episodeCount, characterCount, releasingCount };
 }
