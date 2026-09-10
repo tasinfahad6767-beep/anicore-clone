@@ -171,7 +171,7 @@ export function Header() {
             <span className="theme-toggle-label">{theme === 'light' ? 'Dark' : 'Light'}</span>
           </button>
           <Link href="/list" className="my-list-button desktop-header-control" style={{ textDecoration: 'none' }}>
-            <Heart className="w-3.5 h-3.5" /> My List <span>{listCount}</span>
+            <Heart className="w-3.5 h-3.5" /> My List {listCount > 0 && <span>{listCount}</span>}
           </Link>
           <Link href="/" className="account-button desktop-header-control" style={{ textDecoration: 'none' }}>
             Sign in
