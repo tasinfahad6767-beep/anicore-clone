@@ -1,19 +1,14 @@
 import type { Metadata } from "next";
-import { Sora, Manrope, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/anicore/Header";
 import { Footer } from "@/components/anicore/Footer";
 
-const sora = Sora({ subsets: ["latin"], variable: "--font-display", display: "swap" });
-const manrope = Manrope({ subsets: ["latin"], variable: "--font-body", display: "swap" });
-const plexMono = IBM_Plex_Mono({ subsets: ["latin"], weight: ["400", "500", "600"], variable: "--font-mono", display: "swap" });
-
 export const metadata: Metadata = {
   title: "AniCore — The Living Anime Index",
-  description: "A living anime index unified across Kitsu, TVDB, TMDB, AniList, and MyAnimeList.",
+  description: "AniCore is a living anime index unified across Kitsu, TVDB, TMDB, AniList, and MyAnimeList.",
+  icons: { icon: "/favicon.svg" },
 };
 
-// Prevent flash of wrong theme
 const themeInit = `
 (function() {
   try {
@@ -28,16 +23,14 @@ const themeInit = `
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${sora.variable} ${manrope.variable} ${plexMono.variable}`} suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInit }} />
       </head>
-      <body style={{ fontFamily: "var(--font-body), Manrope, sans-serif" }}>
-        <div className="min-h-screen flex flex-col">
-          <Header />
-          <main className="flex-1">{children}</main>
-          <Footer />
-        </div>
+      <body>
+        <Header />
+        <main id="main-content">{children}</main>
+        <Footer />
       </body>
     </html>
   );

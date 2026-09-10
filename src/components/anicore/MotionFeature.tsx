@@ -3,49 +3,45 @@ import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 
 interface Stats {
-  animeCount: number;
-  episodeCount: number;
-  characterCount: number;
-  releasingCount: number;
+  animeCount: number; episodeCount: number; characterCount: number; releasingCount: number;
+}
+
+function fmt(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
+  return String(n);
 }
 
 export function MotionFeature({ stats }: { stats: Stats }) {
-  const tags = [
-    `${stats.animeCount.toLocaleString()} titles`,
-    '5 providers',
-    `${stats.episodeCount.toLocaleString()} episodes`,
-    `${stats.characterCount.toLocaleString()} characters`,
-    'Kitsu · AniList · MAL · TVDB · TMDB',
-  ];
-
   return (
-    <section className="my-12 md:my-16">
-      <div className="bg-[var(--paper-strong)] border border-[var(--line)] rounded-3xl p-8 md:p-12 relative overflow-hidden">
-        <div className="absolute -top-20 -right-20 w-64 h-64 rounded-full opacity-10" style={{ background: 'var(--cobalt)' }} />
-        <div className="absolute -bottom-32 -left-20 w-80 h-80 rounded-full opacity-10" style={{ background: 'var(--signal)' }} />
-        <div className="relative max-w-3xl">
-          <p className="section-kicker">Dimensional discovery</p>
-          <h2 className="font-display text-3xl md:text-5xl font-black text-[var(--ink)] leading-tight mb-4">
-            The catalog has depth.
-          </h2>
-          <p className="text-[var(--ink-soft)] text-base md:text-lg mb-6 leading-relaxed">
-            Every poster is more than an image. It opens into episodes, people, relations, provider records, artwork, trailers, and the community trail around a title. Five providers unified into one living index — no friction, no jumping between tabs.
-          </p>
-          <div className="flex flex-wrap gap-2 mb-6">
-            {tags.map((t, i) => (
-              <span key={i} className="px-3 py-1.5 rounded-full text-xs font-mono uppercase tracking-wider"
-                style={{
-                  background: i % 2 === 0 ? 'var(--cobalt)' : 'var(--paper)',
-                  color: i % 2 === 0 ? 'white' : 'var(--ink)',
-                  border: `1px solid ${i % 2 === 0 ? 'transparent' : 'var(--line)'}`,
-                }}>
-                {t}
-              </span>
-            ))}
-          </div>
-          <Link href="/library" className="btn-outline">
-            Enter the catalog <ArrowRight className="w-4 h-4" />
-          </Link>
+    <section className="motion-feature discovery-motion" aria-labelledby="living-catalog-title">
+      <div className="motion-feature-copy">
+        <p className="section-kicker">Dimensional discovery</p>
+        <h2 id="living-catalog-title">The catalog has depth.</h2>
+        <p>Every poster is more than an image. It opens into episodes, people, relations, provider records, artwork, trailers, and the community trail around a title.</p>
+        <div className="motion-feature-tags" aria-label="Anime record dimensions">
+          <span>{stats.animeCount.toLocaleString()} titles</span>
+          <span>5 providers</span>
+          <span>{fmt(stats.episodeCount)} episodes</span>
+          <span>{fmt(stats.characterCount)} characters</span>
+        </div>
+        <Link href="/library" className="outline-action" style={{ textDecoration: 'none' }}>
+          Enter the catalog <ArrowRight className="w-4 h-4" />
+        </Link>
+      </div>
+      <div className="motion-stage poster-motion-stage">
+        <div className="motion-media">
+          {/* Static poster fallback (we don't host the original mp4/webm) */}
+          <div style={{
+            position: 'absolute', inset: 0,
+            background: 'linear-gradient(135deg, #1a1f33 0%, #2b3258 50%, #445bff 100%)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: 'rgba(255,255,255,0.1)', fontFamily: 'var(--display)', fontSize: '200px', fontWeight: 800,
+          }}>A</div>
+        </div>
+        <div className="motion-stage-label">
+          <span>Living catalog</span>
+          <strong>Records in relation</strong>
         </div>
       </div>
     </section>

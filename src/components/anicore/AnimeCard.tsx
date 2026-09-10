@@ -1,12 +1,14 @@
 'use client';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
-import { Star, Heart, Play } from 'lucide-react';
+import { Plus, Check } from 'lucide-react';
 import type { Anime } from '@/lib/anicore/db';
 
 interface Props {
   anime: Anime;
-  showScore?: boolean;
+  rank?: number; // 1-based, optional (omit to hide rank)
+  showSources?: boolean; // show source constellation (default true)
+  wide?: boolean; // use anime-card-wide class
 }
 
 function isInList(id: number): boolean {
@@ -26,9 +28,8 @@ function toggleList(id: number): boolean {
   } catch { return false; }
 }
 
-export function AnimeCard({ anime, showScore = true }: Props) {
+export function AnimeCard({ anime, rank, showSources = true, wide = false }: Props) {
   const [inList, setInList] = useState(false);
-  const [imgLoaded, setImgLoaded] = useState(false);
   const title = anime.title_english || anime.title;
 
   useEffect(() => { setInList(isInList(anime.id)); }, [anime.id]);
@@ -39,63 +40,54 @@ export function AnimeCard({ anime, showScore = true }: Props) {
     setInList(toggleList(anime.id));
   };
 
+  // Determine which sources are available based on `sources` field
+  const sourcesArr: string[] = anime.sources || [];
+  const hasSource = (name: string) => sourcesArr.some(s => typeof s === 'string' ? s.toLowerCase() === name.toLowerCase() : (s as any)?.slug?.toLowerCase() === name.toLowerCase());
+
   return (
-    <Link href={`/anime/${anime.slug}`} className="group block">
-      <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-[var(--paper-strong)] border border-[var(--line)] group-hover:border-[var(--cobalt)] transition-all duration-300">
-        {anime.poster_url ? (
-          <img
-            src={anime.poster_url}
-            alt={title}
-            className={`w-full h-full object-cover transition-all duration-500 ${imgLoaded ? 'opacity-100' : 'opacity-0'} group-hover:scale-105`}
-            loading="lazy"
-            onLoad={() => setImgLoaded(true)}
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-[var(--ink-soft)] text-xs p-2 text-center font-mono">{title}</div>
-        )}
-
-        {/* Score pill top-left */}
-        {showScore && anime.score_average && (
-          <div className="absolute top-2 left-2 flex items-center gap-1 px-2 py-0.5 rounded-full bg-[var(--paper-strong)]/95 backdrop-blur text-[10px] font-mono font-bold text-[var(--ink)]">
-            <Star className="w-2.5 h-2.5 fill-[var(--yellow)] text-[var(--yellow)]" />
-            {(anime.score_average).toFixed(0)}
+    <article className={`anime-card ${wide ? 'anime-card-wide' : ''}`}>
+      <Link href={`/anime/${anime.slug}`} className="card-hit" aria-label={`Open ${title}`}
+        style={{ textDecoration: 'none' }}>
+        <div className="poster-wrap">
+          {anime.poster_url ? (
+            <img src={anime.poster_url} alt="" loading="lazy" />
+          ) : (
+            <div className="poster-fallback">{(title || '?').charAt(0)}</div>
+          )}
+          {rank != null && <span className="rank">#{String(rank).padStart(2, '0')}</span>}
+          {anime.score_average != null && (
+            <span className="score score-compact">
+              <strong>{Math.round(anime.score_average)}</strong>
+            </span>
+          )}
+          <button className={`save-button ${inList ? 'saved' : ''}`} aria-label={`Add ${title} to My List`} onClick={handleList}>
+            {inList ? <Check className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+          </button>
+        </div>
+      </Link>
+      <div className="card-copy">
+        {showSources && (
+          <div className="source-constellation">
+            <span className={`source-node source-kitsu ${hasSource('kitsu') ? 'active' : ''}`} title={hasSource('kitsu') ? 'Kitsu source available' : 'Kitsu not linked'}><i></i></span>
+            <span className={`source-node source-tvdb ${hasSource('tvdb') ? 'active' : ''}`} title={hasSource('tvdb') ? 'TVDB source available' : 'TVDB not linked'}><i></i></span>
+            <span className={`source-node source-tmdb ${hasSource('tmdb') ? 'active' : ''}`} title={hasSource('tmdb') ? 'TMDB source available' : 'TMDB not linked'}><i></i></span>
+            <span className={`source-node source-anilist ${hasSource('anilist') ? 'active' : ''}`} title={hasSource('anilist') ? 'AniList source available' : 'AniList not linked'}><i></i></span>
+            <span className={`source-node source-mal ${hasSource('mal') ? 'active' : ''}`} title={hasSource('mal') ? 'MAL source available' : 'MAL not linked'}><i></i></span>
           </div>
         )}
-
-        {/* Airing badge top-right */}
-        {anime.status === 'RELEASING' && (
-          <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[var(--signal)] shadow-[0_0_8px_var(--signal)] animate-pulse" />
-        )}
-
-        {/* My List button */}
-        <button
-          onClick={handleList}
-          aria-label={`Add ${title} to My List`}
-          className={`absolute bottom-2 right-2 w-8 h-8 rounded-full backdrop-blur flex items-center justify-center transition-all ${
-            inList
-              ? 'bg-[var(--signal)] text-[var(--on-signal)] opacity-100'
-              : 'bg-[var(--paper-strong)]/85 text-[var(--ink)] opacity-0 group-hover:opacity-100 hover:bg-[var(--signal)] hover:text-[var(--on-signal)]'
-          }`}
-        >
-          <Heart className={`w-3.5 h-3.5 ${inList ? 'fill-current' : ''}`} />
-        </button>
-
-        {/* Play overlay on hover */}
-        <div className="absolute inset-0 bg-[var(--ink)]/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
-          <div className="w-12 h-12 rounded-full bg-[var(--cobalt)] flex items-center justify-center transform scale-90 group-hover:scale-100 transition-transform">
-            <Play className="w-5 h-5 fill-white text-white ml-0.5" />
+        <h3>{title}</h3>
+        <p>
+          {anime.season_year || '—'} · {(anime.format || 'TV').toLowerCase().charAt(0).toUpperCase() + (anime.format || 'TV').toLowerCase().slice(1)} · {anime.episode_count || anime.episodes_known || '?'} ep
+        </p>
+        {(anime.genres || []).slice(0, 2).length > 0 && (
+          <div className="tag-row">
+            {(anime.genres || []).slice(0, 2).map((g: any) => {
+              const name = typeof g === 'string' ? g : (g?.name || '');
+              return <span key={name}>{name}</span>;
+            })}
           </div>
-        </div>
+        )}
       </div>
-
-      <div className="mt-2 px-0.5">
-        <div className="font-body text-xs font-semibold truncate text-[var(--ink)] group-hover:text-[var(--cobalt)] transition-colors">
-          {title}
-        </div>
-        <div className="font-mono text-[10px] text-[var(--ink-soft)] uppercase tracking-wider mt-0.5 truncate">
-          {anime.season_year || '—'} · {anime.format || 'TV'} · {anime.episode_count || '?'} eps
-        </div>
-      </div>
-    </Link>
+    </article>
   );
 }

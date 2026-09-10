@@ -1,58 +1,65 @@
+'use client';
 import Link from 'next/link';
-import { Github, Heart } from 'lucide-react';
 
 interface Stats {
   animeCount: number; episodeCount: number; characterCount: number; releasingCount: number;
 }
 
+function formatBig(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
+  return String(n);
+}
+
 export function Footer({ stats }: { stats?: Stats }) {
+  const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'numeric', day: 'numeric' });
+
   return (
-    <footer className="mt-16 border-t border-[var(--line)] bg-[var(--paper-strong)]">
-      <div className="max-w-[1480px] mx-auto px-4 sm:px-6 py-10">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-6">
-          <div className="col-span-2">
-            <div className="flex items-center gap-2 mb-3">
-              <span className="w-9 h-9 rounded-xl bg-[var(--cobalt)] text-white flex items-center justify-center font-display font-black text-lg">A</span>
-              <span className="flex flex-col leading-none">
-                <strong className="font-display font-bold text-[var(--ink)] text-base">AniCore</strong>
-                <small className="font-mono text-[10px] text-[var(--ink-soft)] uppercase tracking-wider">the living index</small>
-              </span>
-            </div>
-            <p className="text-sm text-[var(--ink-soft)] max-w-md leading-relaxed">
-              A living anime index unified across Kitsu, TVDB, TMDB, AniList, and MyAnimeList. Self-hosted, fast, no ads, no tracking. The whole catalog, one interface.
-            </p>
-          </div>
-          <div>
-            <h3 className="font-mono text-[10px] font-bold text-[var(--ink-soft)] uppercase tracking-wider mb-3">Browse</h3>
-            <ul className="space-y-2 text-sm text-[var(--ink-soft)]">
-              <li><Link href="/" className="hover:text-[var(--cobalt)]">Discover</Link></li>
-              <li><Link href="/season" className="hover:text-[var(--cobalt)]">This season</Link></li>
-              <li><Link href="/schedule" className="hover:text-[var(--cobalt)]">Schedule</Link></li>
-              <li><Link href="/library" className="hover:text-[var(--cobalt)]">My library</Link></li>
-              <li><Link href="/stats" className="hover:text-[var(--cobalt)]">Stats</Link></li>
-            </ul>
-          </div>
-          {stats && (
-            <div>
-              <h3 className="font-mono text-[10px] font-bold text-[var(--ink-soft)] uppercase tracking-wider mb-3">Database</h3>
-              <ul className="space-y-2 text-sm text-[var(--ink-soft)] font-mono">
-                <li>{stats.animeCount.toLocaleString()} titles</li>
-                <li>{stats.episodeCount.toLocaleString()} episodes</li>
-                <li>{stats.characterCount.toLocaleString()} characters</li>
-                <li>{stats.releasingCount.toLocaleString()} airing now</li>
-              </ul>
-            </div>
-          )}
+    <footer className="site-footer">
+      <div className="site-footer-lead">
+        <Link href="/" className="brand footer-brand" style={{ textDecoration: 'none' }}>
+          <span className="brand-mark">A</span>
+          <span>
+            <strong>AniCore</strong>
+            <small>the living index</small>
+          </span>
+        </Link>
+        <p>One traceable anime record, resolved across the databases fans and developers already use.</p>
+        <a className="footer-email" href="mailto:hello@anicore.local">hello@anicore.local</a>
+      </div>
+
+      <div className="site-footer-links">
+        <div>
+          <strong>Explore</strong>
+          <Link href="/">Discover</Link>
+          <Link href="/season">This season</Link>
+          <Link href="/schedule">Schedule</Link>
+          <Link href="/library">My library</Link>
+          <Link href="/stats">Site stats</Link>
         </div>
-        <div className="border-t border-[var(--line)] pt-5 flex flex-col md:flex-row items-center justify-between gap-3">
-          <div className="text-xs text-[var(--ink-soft)] flex items-center gap-1.5">
-            Built with <Heart className="w-3 h-3 text-[var(--signal)] fill-[var(--signal)]" /> · Self-hosted · No ads, no tracking
-          </div>
-          <a href="https://github.com/tasinfahad6767-beep/anicore-clone" target="_blank" rel="noopener"
-            className="flex items-center gap-1.5 text-xs text-[var(--ink-soft)] hover:text-[var(--ink)]">
-            <Github className="w-3.5 h-3.5" /> GitHub
-          </a>
+        <div>
+          <strong>Build</strong>
+          <Link href="/lab">API Lab</Link>
+          <Link href="/lab">Developers</Link>
+          <Link href="/stats">Data &amp; sources</Link>
+          <Link href="/stats">Service status</Link>
         </div>
+        <div>
+          <strong>AniCore</strong>
+          <Link href="/">About</Link>
+          <Link href="/">Contact</Link>
+          <Link href="/">Community guidelines</Link>
+          <Link href="/">Privacy</Link>
+          <Link href="/">Terms</Link>
+        </div>
+      </div>
+
+      <div className="site-footer-bottom">
+        <span>© {new Date().getFullYear()} AniCore</span>
+        <span>Independent anime metadata platform · {stats ? `${formatBig(stats.animeCount)} titles indexed · Index updated ${today}` : `Index updated ${today}`}</span>
+        <button>
+          <i></i> Service status
+        </button>
       </div>
     </footer>
   );

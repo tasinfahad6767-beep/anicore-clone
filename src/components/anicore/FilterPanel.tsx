@@ -1,141 +1,105 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { Search, X, SlidersHorizontal } from 'lucide-react';
-
-const SORTS = [
-  { value: 'trending', label: 'Trending' },
-  { value: 'popular', label: 'Most popular' },
-  { value: 'score', label: 'Highest rated' },
-  { value: 'newest', label: 'Newest first' },
-  { value: 'az', label: 'A → Z' },
-];
-
-const FORMATS = ['TV', 'TV_SHORT', 'MOVIE', 'OVA', 'ONA', 'SPECIAL', 'MUSIC'];
-const STATUSES = [
-  { value: '', label: 'Any status' },
-  { value: 'RELEASING', label: 'Currently airing' },
-  { value: 'FINISHED', label: 'Finished' },
-  { value: 'NOT_YET_RELEASED', label: 'Upcoming' },
-  { value: 'CANCELLED', label: 'Cancelled' },
-];
+import { Search, ArrowRight, X } from 'lucide-react';
 
 interface Props {
   sort: string; setSort: (v: string) => void;
-  genre: string; setGenre: (v: string) => void;
-  year: string; setYear: (v: string) => void;
   format: string; setFormat: (v: string) => void;
-  status: string; setStatus: (v: string) => void;
-  query?: string; setQuery?: (v: string) => void;
+  yearFrom: string; setYearFrom: (v: string) => void;
+  query: string; setQuery: (v: string) => void;
+  genre: string; setGenre: (v: string) => void;
+  genres: Array<{ genre: string; count: number }>;
+  total: number;
+}
+
+const SORTS = [
+  { value: 'score', label: 'Highest rated' },
+  { value: 'popularity', label: 'Most popular' },
+  { value: 'trending', label: 'Trending' },
+  { value: 'newest', label: 'Newest' },
+  { value: 'az', label: 'A → Z' },
+];
+
+const FORMATS = [
+  { value: '', label: 'All formats' },
+  { value: 'TV', label: 'TV series' },
+  { value: 'MOVIE', label: 'Movies' },
+  { value: 'OVA', label: 'OVA' },
+  { value: 'ONA', label: 'ONA' },
+  { value: 'SPECIAL', label: 'Specials' },
+];
+
+const YEAR_RANGES = [
+  { value: '', label: 'Any year' },
+  { value: '2025', label: '2025+' },
+  { value: '2020', label: '2020+' },
+  { value: '2010', label: '2010+' },
+  { value: '2000', label: '2000+' },
+  { value: '1990', label: '1990+' },
+];
+
+function fmtCount(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
+  return String(n);
 }
 
 export function FilterPanel({
-  sort, setSort, genre, setGenre, year, setYear, format, setFormat, status, setStatus,
-  query, setQuery,
+  sort, setSort, format, setFormat, yearFrom, setYearFrom,
+  query, setQuery, genre, setGenre, genres, total,
 }: Props) {
-  const [genres, setGenres] = useState<string[]>([]);
-  const [years, setYears] = useState<number[]>([]);
-  const [showAdvanced, setShowAdvanced] = useState(false);
-
-  useEffect(() => {
-    fetch('/api/genres').then(r => r.json()).then(d => setGenres(d.genres || []));
-    fetch('/api/filters').then(r => r.json()).then(d => setYears(d.years || []));
-  }, []);
-
-  const activeCount = [genre, format, status].filter(Boolean).length;
-  const clearAll = () => { setGenre(''); setYear(''); setFormat(''); setStatus(''); };
+  const activeFilters = [genre, format, yearFrom].filter(Boolean).length;
+  const clearAll = () => { setGenre(''); setFormat(''); setYearFrom(''); };
 
   return (
-    <div className="bg-[var(--paper-strong)] border border-[var(--line)] rounded-2xl p-4 md:p-5 mb-6">
-      {/* Search + Sort row */}
-      <div className="flex flex-col md:flex-row gap-3 mb-3">
-        {setQuery && (
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--ink-soft)]" />
+    <>
+      <div className="filter-panel">
+        <label className="filter-search" htmlFor="filter-search">
+          <span>Search</span>
+          <div>
+            <Search className="w-4 h-4" />
             <input
-              type="text" value={query || ''} onChange={(e) => setQuery(e.target.value)}
-              placeholder="Filter the catalog…"
-              className="w-full bg-[var(--paper)] border border-[var(--line)] rounded-full pl-10 pr-3 py-2 text-sm text-[var(--ink)] placeholder:text-[var(--ink-soft)] focus:border-[var(--cobalt)] focus:outline-none"
+              id="filter-search"
+              name="filter-search"
+              placeholder="Title, synonym, native name…"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
             />
           </div>
-        )}
-        <div className="flex items-center gap-2">
-          <label className="font-mono text-[10px] uppercase tracking-wider text-[var(--ink-soft)] hidden sm:block">Sort by</label>
-          <select value={sort} onChange={(e) => setSort(e.target.value)}
-            className="bg-[var(--paper)] border border-[var(--line)] rounded-full px-3 py-2 text-sm text-[var(--ink)] focus:border-[var(--cobalt)] focus:outline-none">
+        </label>
+        <label htmlFor="filter-sort">
+          <span>Sort by</span>
+          <select id="filter-sort" name="filter-sort" value={sort} onChange={(e) => setSort(e.target.value)}>
             {SORTS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
           </select>
-          <button onClick={() => setShowAdvanced(s => !s)}
-            className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-mono uppercase tracking-wider border transition-colors ${
-              showAdvanced || activeCount > 0
-                ? 'bg-[var(--cobalt)] text-white border-transparent'
-                : 'bg-[var(--paper)] text-[var(--ink)] border-[var(--line)] hover:border-[var(--cobalt)]'
-            }`}>
-            <SlidersHorizontal className="w-3.5 h-3.5" /> Filters
-            {activeCount > 0 && <span className="bg-white text-[var(--cobalt)] rounded-full px-1.5 text-[10px] font-bold">{activeCount}</span>}
+        </label>
+        <label htmlFor="filter-format">
+          <span>Format</span>
+          <select id="filter-format" name="filter-format" value={format} onChange={(e) => setFormat(e.target.value)}>
+            {FORMATS.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
+          </select>
+        </label>
+        <label htmlFor="filter-year-from">
+          <span>From year</span>
+          <select id="filter-year-from" name="filter-year-from" value={yearFrom} onChange={(e) => setYearFrom(e.target.value)}>
+            {YEAR_RANGES.map(y => <option key={y.value} value={y.value}>{y.label}</option>)}
+          </select>
+        </label>
+        {activeFilters > 0 && (
+          <button className="clear-filters" onClick={clearAll} style={{ border: 0, cursor: 'pointer' }}>
+            <X className="w-3 h-3 inline" /> Clear ({activeFilters})
           </button>
-        </div>
+        )}
       </div>
 
-      {/* Advanced filters */}
-      {showAdvanced && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-3 border-t border-[var(--line)] fade-in">
-          <div>
-            <label className="font-mono text-[10px] uppercase tracking-wider text-[var(--ink-soft)] font-semibold">Genre</label>
-            <select value={genre} onChange={(e) => setGenre(e.target.value)}
-              className="w-full mt-1 bg-[var(--paper)] border border-[var(--line)] rounded-lg px-2 py-1.5 text-xs text-[var(--ink)]">
-              <option value="">All genres</option>
-              {genres.map(g => <option key={g} value={g}>{g}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="font-mono text-[10px] uppercase tracking-wider text-[var(--ink-soft)] font-semibold">Year</label>
-            <select value={year} onChange={(e) => setYear(e.target.value)}
-              className="w-full mt-1 bg-[var(--paper)] border border-[var(--line)] rounded-lg px-2 py-1.5 text-xs text-[var(--ink)]">
-              <option value="">All years</option>
-              {years.map(y => <option key={y} value={String(y)}>{y}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="font-mono text-[10px] uppercase tracking-wider text-[var(--ink-soft)] font-semibold">Format</label>
-            <select value={format} onChange={(e) => setFormat(e.target.value)}
-              className="w-full mt-1 bg-[var(--paper)] border border-[var(--line)] rounded-lg px-2 py-1.5 text-xs text-[var(--ink)]">
-              <option value="">All formats</option>
-              {FORMATS.map(f => <option key={f} value={f}>{f}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="font-mono text-[10px] uppercase tracking-wider text-[var(--ink-soft)] font-semibold">Status</label>
-            <select value={status} onChange={(e) => setStatus(e.target.value)}
-              className="w-full mt-1 bg-[var(--paper)] border border-[var(--line)] rounded-lg px-2 py-1.5 text-xs text-[var(--ink)]">
-              {STATUSES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
-            </select>
-          </div>
-        </div>
-      )}
-
-      {/* Active filter chips */}
-      {activeCount > 0 && (
-        <div className="flex flex-wrap gap-1.5 mt-3 pt-3 border-t border-[var(--line)]">
-          {genre && <Chip label={genre} onRemove={() => setGenre('')} />}
-          {year && <Chip label={year} onRemove={() => setYear('')} />}
-          {format && <Chip label={format} onRemove={() => setFormat('')} />}
-          {status && <Chip label={STATUSES.find(s => s.value === status)?.label || status} onRemove={() => setStatus('')} />}
-          <button onClick={clearAll} className="text-xs text-[var(--signal)] hover:underline font-mono uppercase tracking-wider ml-1 flex items-center gap-1">
-            <X className="w-3 h-3" /> Clear all
+      <div className="genre-chips">
+        <button className={!genre ? 'active' : ''} onClick={() => setGenre('')}>All <span>{fmtCount(total)}</span></button>
+        {genres.slice(0, 20).map(g => (
+          <button key={g.genre} className={genre === g.genre ? 'active' : ''} onClick={() => setGenre(genre === g.genre ? '' : g.genre)}>
+            {g.genre} <span>{fmtCount(g.count)}</span>
           </button>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function Chip({ label, onRemove }: { label: string; onRemove: () => void }) {
-  return (
-    <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-[var(--cobalt)]/10 text-[var(--cobalt)] border border-[var(--cobalt)]/20 rounded-full text-[11px] font-mono uppercase tracking-wider">
-      {label}
-      <button onClick={onRemove} aria-label={`Remove ${label} filter`} className="hover:text-[var(--signal)]">
-        <X className="w-3 h-3" />
-      </button>
-    </span>
+        ))}
+      </div>
+    </>
   );
 }

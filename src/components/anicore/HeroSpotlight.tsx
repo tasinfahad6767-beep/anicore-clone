@@ -1,12 +1,20 @@
 'use client';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, Play, Shuffle, Compass, Star } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Search, Shuffle, ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { Anime } from '@/lib/anicore/db';
 
-export function HeroSpotlight({ items }: { items: Anime[] }) {
+interface Props {
+  items: Anime[];
+  totalAnime: number;
+}
+
+export function HeroSpotlight({ items, totalAnime }: Props) {
+  const router = useRouter();
   const [idx, setIdx] = useState(0);
   const [paused, setPaused] = useState(false);
+  const [q, setQ] = useState('');
 
   useEffect(() => {
     if (paused || items.length <= 1) return;
@@ -15,101 +23,132 @@ export function HeroSpotlight({ items }: { items: Anime[] }) {
   }, [paused, items.length]);
 
   if (!items.length) {
-    return <div className="h-[520px] md:h-[620px] bg-[var(--paper-strong)] rounded-3xl animate-pulse" />;
+    return <section className="hero"><div className="hero-art" style={{ height: 710, background: 'var(--paper-strong)' }} /></section>;
   }
 
   const a = items[idx];
-  const genres: string[] = a.genres || [];
+  const titleLong = (a.title_english || a.title).length > 22;
+  const score = a.score_average;
+
+  const submitSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!q.trim()) return;
+    router.push(`/search?q=${encodeURIComponent(q)}`);
+  };
 
   return (
-    <section className="relative h-[520px] md:h-[620px] w-full overflow-hidden rounded-3xl group"
-      onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
-      {/* Background art */}
-      {a.banner_url && (
-        <img src={a.banner_url} alt="" className="absolute inset-0 w-full h-full object-cover transition-opacity duration-700" key={a.id} />
-      )}
-      <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, var(--paper) 0%, rgba(244,246,251,0.4) 40%, transparent 70%), linear-gradient(to right, var(--paper) 0%, transparent 60%)' }} />
-      <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, var(--paper) 0%, rgba(9,13,23,0.4) 40%, transparent 70%), linear-gradient(to right, var(--paper) 0%, transparent 60%)' }} data-theme-dark />
-
-      {/* Top right counter */}
-      <div className="absolute top-5 right-5 text-right text-white drop-shadow">
-        <div className="font-mono text-[10px] uppercase tracking-wider opacity-80">This week</div>
-        <div className="font-display text-3xl font-black leading-none">{String(idx + 1).padStart(2, '0')}</div>
-        <div className="font-mono text-[10px] uppercase tracking-wider opacity-60">of {String(items.length).padStart(2, '0')}</div>
-      </div>
-
-      {/* Content */}
-      <div className="absolute bottom-0 left-0 right-0 p-6 md:p-12">
-        <div className="max-w-3xl">
-          <div className="font-mono text-[11px] uppercase tracking-[0.15em] text-[var(--cobalt)] mb-3 flex items-center gap-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-[var(--signal)] animate-pulse" />
-            Trending spotlight
-            {a.status === 'RELEASING' && <span className="px-2 py-0.5 bg-[var(--signal)] text-[var(--on-signal)] rounded-full text-[10px] font-bold">AIRING</span>}
+    <section className={`hero ${titleLong ? 'has-long-title' : ''} ${paused ? 'hero-is-paused' : ''}`}>
+      {/* Art column */}
+      <div className="hero-art" style={{ backgroundImage: `url("${a.banner_url || a.poster_url || ''}")` }}>
+        <div className="hero-art-wash" />
+        <div className="hero-art-caption">
+          <span>This week</span>
+          <strong>{String(idx + 1).padStart(2, '0')}</strong>
+          <small>of {String(items.length).padStart(2, '0')}</small>
+        </div>
+        <div className="hero-switcher" aria-label="Weekly trending spotlight controls">
+          <button aria-label="Previous weekly spotlight" onClick={() => setIdx(i => (i - 1 + items.length) % items.length)}>
+            <ChevronRight className="w-3.5 h-3.5" />
+          </button>
+          <div className="hero-dots">
+            {items.map((_, i) => (
+              <button key={i} aria-label={`Show ${items[i].title_english || items[i].title}`}
+                className={i === idx ? 'active' : ''} onClick={() => setIdx(i)}>
+                <span />
+              </button>
+            ))}
           </div>
-
-          <h1 className="font-display text-4xl md:text-6xl font-black text-[var(--ink)] leading-[1.05] mb-2">
-            {a.title_english || a.title}
-          </h1>
-          {a.title_native && a.title_native !== a.title_english && (
-            <p className="font-body text-[var(--ink-soft)] text-base md:text-lg mb-4">{a.title_native}</p>
-          )}
-
-          <div className="flex flex-wrap items-center gap-4 mb-5 text-sm text-[var(--ink-soft)]">
-            {a.score_average && (
-              <span className="inline-flex items-center gap-1 font-mono font-bold text-[var(--ink)]">
-                <Star className="w-3.5 h-3.5 fill-[var(--yellow)] text-[var(--yellow)]" /> {(a.score_average).toFixed(0)}
-                <span className="text-[var(--ink-soft)] font-normal">/100</span>
-              </span>
-            )}
-            {a.format && <span className="font-mono uppercase tracking-wider text-xs">{a.format}</span>}
-            {a.season_year && <span className="font-mono uppercase tracking-wider text-xs">{a.season} {a.season_year}</span>}
-            {a.episode_count && <span className="font-mono uppercase tracking-wider text-xs">{a.episode_count} eps</span>}
-            {a.duration_minutes && <span className="font-mono uppercase tracking-wider text-xs">{a.duration_minutes}m</span>}
-          </div>
-
-          {genres.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 mb-5">
-              {genres.slice(0, 5).map(g => (
-                <span key={g} className="px-2.5 py-1 bg-[var(--paper-strong)]/90 backdrop-blur border border-[var(--line)] rounded-full text-[11px] font-mono uppercase tracking-wide text-[var(--ink-soft)]">{g}</span>
-              ))}
-            </div>
-          )}
-
-          {a.synopsis && (
-            <p className="text-[var(--ink-soft)] text-sm md:text-base mb-6 line-clamp-2 max-w-2xl">{a.synopsis}</p>
-          )}
-
-          <div className="flex flex-wrap items-center gap-3">
-            <Link href={`/anime/${a.slug}`} className="btn-primary">
-              <Compass className="w-4 h-4" /> Explore
-            </Link>
-            <Link href={`/anime/${a.slug}/watch`} className="btn-signal">
-              <Play className="w-4 h-4 fill-[var(--on-signal)]" /> Watch
-            </Link>
-            <Link href="/random" className="btn-outline">
-              <Shuffle className="w-4 h-4" /> Pick for me
-            </Link>
-          </div>
+          <button aria-label="Next weekly spotlight" onClick={() => setIdx(i => (i + 1) % items.length)}>
+            <ChevronRight className="w-3.5 h-3.5" />
+          </button>
+          <button className="hero-pause" aria-label="Pause weekly spotlight" onClick={() => setPaused(p => !p)}>
+            {paused ? '▶' : 'Ⅱ'}
+          </button>
         </div>
       </div>
 
-      {/* Arrows */}
-      <button onClick={() => setIdx(i => (i - 1 + items.length) % items.length)}
-        className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-[var(--paper-strong)]/80 backdrop-blur border border-[var(--line)] hover:border-[var(--cobalt)] flex items-center justify-center text-[var(--ink)] opacity-0 group-hover:opacity-100 transition-opacity">
-        <ChevronLeft className="w-5 h-5" />
-      </button>
-      <button onClick={() => setIdx(i => (i + 1) % items.length)}
-        className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-[var(--paper-strong)]/80 backdrop-blur border border-[var(--line)] hover:border-[var(--cobalt)] flex items-center justify-center text-[var(--ink)] opacity-0 group-hover:opacity-100 transition-opacity">
-        <ChevronRight className="w-5 h-5" />
-      </button>
+      {/* Content column */}
+      <div className="hero-content" aria-live="polite">
+        <p className="hero-kicker">
+          <span>This week / {String(idx + 1).padStart(2, '0')}</span> trending across the index
+        </p>
+        <h1 className={`hero-weekly-title ${titleLong ? 'is-long' : ''}`}>
+          {a.title_english || a.title}
+        </h1>
+        {a.title_native && a.title_native !== a.title_english && (
+          <p className="hero-native-name">{a.title_native}</p>
+        )}
+        <div className="hero-weekly-meta">
+          {a.status && <span>{a.status}</span>}
+          {a.format && <span>{a.format}</span>}
+          {a.season_year && <span>{a.season_year}</span>}
+          {a.episode_count && <span>{a.episode_count} episodes</span>}
+          {score != null && (
+            <span className="score">
+              <strong>{Math.round(score)}</strong>
+              <small>/100</small>
+            </span>
+          )}
+        </div>
+        <p className="hero-intro">
+          Search, trace, and save anime across five independent databases — resolved into one precise, human-friendly catalog.
+        </p>
 
-      {/* Dots */}
-      <div className="absolute bottom-5 right-6 flex gap-1.5">
-        {items.map((_, i) => (
-          <button key={i} onClick={() => setIdx(i)} aria-label={`Slide ${i + 1}`}
-            className={`h-1.5 rounded-full transition-all ${i === idx ? 'w-8 bg-[var(--cobalt)]' : 'w-1.5 bg-[var(--ink)]/30 hover:bg-[var(--ink)]/60'}`} />
-        ))}
+        <div className="search-shell">
+          <form className="global-search" onSubmit={submitSearch}>
+            <Search className="w-5 h-5" />
+            <input
+              id="global-search"
+              name="search"
+              placeholder={`Search ${totalAnime.toLocaleString()} anime, characters, studios…`}
+              aria-label="Search the AniCore database"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+            />
+            <kbd>/</kbd>
+            <button type="submit">Explore</button>
+          </form>
+        </div>
+
+        <div className="hero-quick-actions">
+          <Link href="/random">
+            <Shuffle className="w-3.5 h-3.5" /> Pick for me
+          </Link>
+          <Link href="/library">
+            Browse the full catalog <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
+        </div>
+
+        <div className="hero-footnote">
+          <div className="source-constellation with-labels">
+            <span className="source-node source-kitsu active" title="Kitsu source available"><i></i><b>Kitsu</b></span>
+            <span className="source-node source-tvdb active" title="TVDB source available"><i></i><b>TVDB</b></span>
+            <span className="source-node source-tmdb active" title="TMDB source available"><i></i><b>TMDB</b></span>
+            <span className="source-node source-anilist active" title="AniList source available"><i></i><b>AniList</b></span>
+            <span className="source-node source-mal active" title="MAL source available"><i></i><b>MAL</b></span>
+          </div>
+          <span>Unified across Kitsu, TVDB, TMDB, AniList &amp; MAL</span>
+        </div>
       </div>
+
+      {/* Feature bar (bottom of hero-art) */}
+      <Link href={`/anime/${a.slug}`} className="hero-feature" style={{ textDecoration: 'none' }}>
+        <span className="feature-index">Weekly / {String(idx + 1).padStart(2, '0')}</span>
+        <div>
+          <small>Open this week&apos;s full record</small>
+          <strong>{a.title_english || a.title}</strong>
+          {a.title_native && <span>{a.title_native}</span>}
+        </div>
+        {score != null && (
+          <span className="score">
+            <strong>{Math.round(score)}</strong>
+            <small>/100</small>
+          </span>
+        )}
+        <i>
+          <ArrowRight className="w-5 h-5" />
+        </i>
+      </Link>
     </section>
   );
 }

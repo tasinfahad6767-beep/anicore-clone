@@ -201,13 +201,14 @@ export function getAnimeFullData(slug: string) {
 
 export function listAnime(opts: {
   sort?: string; page?: number; perPage?: number;
-  genre?: string; year?: string; format?: string; status?: string;
+  genre?: string; year?: string; yearFrom?: string;
+  format?: string; status?: string;
   query?: string;
 }) {
   const db = getDb();
   const {
     sort = 'trending', page = 1, perPage = 24,
-    genre, year, format, status, query,
+    genre, year, yearFrom, format, status, query,
   } = opts;
   const offset = (page - 1) * perPage;
 
@@ -215,14 +216,17 @@ export function listAnime(opts: {
   const params: any[] = [];
 
   if (genre) {
-    // Match either format: ["Action"] or [{"name":"Action","slug":"action"}]
-    where.push('(genres LIKE ? OR genres LIKE ?)');
     const slug = genre.toLowerCase().replace(/\s+/g, '-');
+    where.push('(genres LIKE ? OR genres LIKE ?)');
     params.push(`%"${genre}"%`, `%"slug":"${slug}"%`);
   }
   if (year) {
     where.push('season_year = ?');
     params.push(parseInt(year));
+  }
+  if (yearFrom) {
+    where.push('season_year >= ?');
+    params.push(parseInt(yearFrom));
   }
   if (format) {
     where.push('format = ?');
@@ -241,10 +245,11 @@ export function listAnime(opts: {
 
   let orderClause = 'score_average DESC NULLS LAST';
   if (sort === 'trending') orderClause = 'anilist_popularity DESC NULLS LAST';
-  else if (sort === 'popular') orderClause = 'mal_members DESC NULLS LAST';
+  else if (sort === 'popularity') orderClause = 'mal_members DESC NULLS LAST';
   else if (sort === 'newest') orderClause = 'season_year DESC, season DESC';
   else if (sort === 'score') orderClause = 'score_average DESC NULLS LAST';
   else if (sort === 'az') orderClause = 'title COLLATE NOCASE ASC';
+  else if (sort === 'quality') orderClause = 'data_quality DESC NULLS LAST, score_average DESC NULLS LAST';
 
   const countRow = db.prepare(`SELECT COUNT(*) as total FROM anime WHERE ${whereClause}`).get(...params) as any;
   const total = countRow?.total ?? 0;

@@ -1,47 +1,42 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Calendar, Tv, Clock, Star } from 'lucide-react';
+import { Calendar } from 'lucide-react';
 import { AnimeCard } from '@/components/anicore/AnimeCard';
-import { Footer } from '@/components/anicore/Footer';
-import { AnimeGridSkeleton } from '@/components/anicore/AnimeGrid';
 import type { Anime } from '@/lib/anicore/db';
 
 export default function SchedulePage() {
-  const [items, setItems] = useState<Anime[]>([]);
+  const [airing, setAiring] = useState<Anime[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetch('/api/airing').then(r => r.json()).then(d => {
-      setItems(d.items || []);
+      setAiring(d.items || []);
       setLoading(false);
     });
   }, []);
 
-  return (
-    <div className="min-h-screen bg-[#0a0a0f] text-white">
-      <div className="max-w-[1600px] mx-auto px-4 py-6">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold mb-1 flex items-center gap-2">
-            <Calendar className="w-6 h-6 text-rose-400" /> Currently Airing
-          </h1>
-          <p className="text-sm text-zinc-500">Anime with new episodes coming out right now</p>
-        </div>
+  if (loading) return <div style={{ minHeight: '100vh', background: 'var(--paper)' }} className="skeleton" />;
 
-        {loading ? (
-          <AnimeGridSkeleton count={18} />
-        ) : items.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-7 gap-3 md:gap-4">
-            {items.map(a => <AnimeCard key={a.id} anime={a} />)}
-          </div>
-        ) : (
-          <div className="text-center py-16 text-zinc-500">
-            <div className="text-lg mb-2">No currently airing anime in database</div>
-            <Link href="/" className="text-rose-400 hover:text-rose-300 text-sm">← Back to Home</Link>
-          </div>
-        )}
+  return (
+    <section className="fan-pulse-section" id="schedule">
+      <div className="section-heading">
+        <div>
+          <p className="section-kicker">Weekly schedule</p>
+          <h2>What&apos;s airing now.</h2>
+        </div>
+        <p>Currently releasing series — sorted by popularity.</p>
       </div>
-      <Footer />
-    </div>
+
+      {airing.length > 0 ? (
+        <div className="browse-grid">
+          {airing.map((a, i) => <AnimeCard key={`${a.id}-${i}`} anime={a} />)}
+        </div>
+      ) : (
+        <p style={{ color: 'var(--ink-soft)', textAlign: 'center', padding: '64px 0' }}>
+          No currently airing anime in the index. <Link href="/" style={{ color: 'var(--cobalt)' }}>← Back home</Link>
+        </p>
+      )}
+    </section>
   );
 }

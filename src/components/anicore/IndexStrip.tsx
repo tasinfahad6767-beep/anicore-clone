@@ -7,30 +7,36 @@ interface Stats {
   releasingCount: number;
 }
 
+function fmt(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
+  return String(n);
+}
+
 export function IndexStrip({ stats }: { stats: Stats }) {
-  const items = [
-    { label: 'Titles indexed', value: stats.animeCount.toLocaleString(), color: 'var(--cobalt)' },
-    { label: 'Episodes cataloged', value: stats.episodeCount.toLocaleString(), color: 'var(--signal)' },
-    { label: 'Characters tracked', value: stats.characterCount.toLocaleString(), color: 'var(--mint)' },
-    { label: 'Currently airing', value: stats.releasingCount.toLocaleString(), color: 'var(--yellow)' },
-    { label: 'Data providers', value: '5', color: 'var(--lilac)' },
-  ];
+  const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'numeric', day: 'numeric' });
 
   return (
-    <section className="my-6 md:my-8">
-      <div className="bg-[var(--paper-strong)] border border-[var(--line)] rounded-2xl p-5 md:p-6">
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 md:gap-6">
-          {items.map((it, i) => (
-            <div key={i} className="text-center md:text-left">
-              <div className="font-display font-black text-2xl md:text-3xl mb-1" style={{ color: it.color }}>
-                {it.value}
-              </div>
-              <div className="font-mono text-[10px] uppercase tracking-wider text-[var(--ink-soft)]">
-                {it.label}
-              </div>
-            </div>
-          ))}
-        </div>
+    <section className="index-strip" aria-label="AniCore database statistics">
+      <div>
+        <span>Titles indexed</span>
+        <strong>{stats.animeCount.toLocaleString()}</strong>
+      </div>
+      <div>
+        <span>Episode records</span>
+        <strong>{fmt(stats.episodeCount)}</strong>
+      </div>
+      <div>
+        <span>Characters mapped</span>
+        <strong>{fmt(stats.characterCount)}</strong>
+      </div>
+      <div>
+        <span>Cross-source matches</span>
+        <strong>5-way</strong>
+      </div>
+      <div className="strip-status">
+        <i></i>
+        <span>Index updated {today}</span>
       </div>
     </section>
   );

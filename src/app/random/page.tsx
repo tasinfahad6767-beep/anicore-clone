@@ -12,10 +12,10 @@ export default function RandomPage() {
   }, [router]);
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center">
-      <div className="text-center">
-        <div className="w-12 h-12 mx-auto mb-4 border-4 border-zinc-800 border-t-rose-500 rounded-full animate-spin" />
-        <div className="text-zinc-400 text-sm">Picking a random anime...</div>
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--paper)' }}>
+      <div style={{ textAlign: 'center', color: 'var(--ink-soft)' }}>
+        <div className="skeleton" style={{ width: 48, height: 48, margin: '0 auto 16px', borderRadius: 999 }} />
+        <p style={{ fontFamily: 'var(--utility)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Picking a random anime…</p>
       </div>
     </div>
   );

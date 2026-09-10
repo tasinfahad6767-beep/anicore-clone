@@ -1,76 +1,16 @@
+@import "./anicore.css";
+
+/* Tailwind utilities (optional, for minor tweaks not covered by anicore.css) */
 @import "tailwindcss";
 
-:root {
-  /* Light theme (default — matches AniCore paper style) */
-  --paper: #f4f6fb;
-  --paper-strong: #ffffff;
-  --ink: #121526;
-  --ink-soft: #555c72;
-  --line: #d9dfeb;
-  --line-dark: #b9c2d4;
-  --cobalt: #445bff;
-  --cobalt-dark: #293bca;
-  --signal: #ff604a;
-  --signal-dark: #b33722;
-  --on-signal: #2b0d06;
-  --mint: #9de7c2;
-  --mint-ink: #0d3526;
-  --focus-ring: rgba(68, 91, 255, .45);
-  --lilac: #ddd7ff;
-  --yellow: #ffcf5a;
-  --yellow-ink: #2b2208;
-  --display: var(--font-display), "Sora", sans-serif;
-  --body: var(--font-body), "Manrope", sans-serif;
-  --utility: var(--font-mono), "IBM Plex Mono", monospace;
-}
+/* Override Next.js defaults that conflict with anicore.css */
+html, body { background: var(--paper); }
 
-:root[data-theme="dark"] {
-  --paper: #090d17;
-  --paper-strong: #111827;
-  --ink: #f2f5fc;
-  --ink-soft: #9faac0;
-  --line: #222c3f;
-  --line-dark: #36435b;
-  --cobalt: #7c8dff;
-  --cobalt-dark: #4a59cc;
-  --signal: #ff7863;
-  --signal-dark: #c83a28;
-  --on-signal: #2b0d06;
-  --mint: #91e2bd;
-  --mint-ink: #0b2f21;
-  --focus-ring: rgba(124, 141, 255, .6);
-  --lilac: #2b2d51;
-  --yellow: #ffd166;
-  --yellow-ink: #2b2208;
-}
+/* Smooth focus + transitions on interactive elements */
+button, a, input, select { font-family: inherit; }
 
-* { box-sizing: border-box; }
-
-html, body {
-  margin: 0;
-  padding: 0;
-  background: var(--paper);
-  background-image: radial-gradient(circle at 10% 8%, rgba(68, 91, 255, .06), transparent 22rem);
-  color: var(--ink);
-  font-family: "Manrope", system-ui, -apple-system, sans-serif;
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  scroll-behavior: smooth;
-  min-height: 100vh;
-}
-
-:root[data-theme="dark"] body {
-  background-image: radial-gradient(circle at 10% 8%, rgba(124, 141, 255, .08), transparent 22rem);
-}
-
-/* Scrollbar */
-::-webkit-scrollbar { width: 10px; height: 10px; }
-::-webkit-scrollbar-track { background: var(--paper); }
-::-webkit-scrollbar-thumb { background: var(--line-dark); border-radius: 5px; }
-::-webkit-scrollbar-thumb:hover { background: var(--ink-soft); }
-
-/* Line clamp */
-.line-clamp-1, .line-clamp-2, .line-clamp-3, .line-clamp-4, .line-clamp-5, .line-clamp-6 {
+/* Line clamp helpers (anicore.css uses webkit line-clamp in places) */
+.line-clamp-1, .line-clamp-2, .line-clamp-3, .line-clamp-4 {
   display: -webkit-box;
   -webkit-box-orient: vertical;
   overflow: hidden;
@@ -79,104 +19,14 @@ html, body {
 .line-clamp-2 { -webkit-line-clamp: 2; }
 .line-clamp-3 { -webkit-line-clamp: 3; }
 .line-clamp-4 { -webkit-line-clamp: 4; }
-.line-clamp-5 { -webkit-line-clamp: 5; }
-.line-clamp-6 { -webkit-line-clamp: 6; }
 
-/* Focus */
-*:focus { outline: none; }
-*:focus-visible {
-  outline: 3px solid var(--focus-ring);
-  outline-offset: 3px;
-  border-radius: 6px;
+/* Skeleton shimmer */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
 }
-
-/* Display font for headings */
-.font-display { font-family: var(--display); letter-spacing: -0.02em; }
-.font-mono { font-family: var(--utility); }
-.font-body { font-family: var(--body); }
-
-/* Section kicker (eyebrow label) */
-.section-kicker {
-  font-family: var(--utility);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--cobalt);
-  margin: 0 0 8px;
+.skeleton {
+  background: linear-gradient(90deg, var(--paper) 0%, var(--paper-strong) 50%, var(--paper) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
 }
-
-/* Buttons */
-.btn-primary {
-  background: var(--cobalt);
-  color: white;
-  padding: 10px 18px;
-  border-radius: 999px;
-  font-weight: 600;
-  font-size: 14px;
-  border: none;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  transition: all 0.18s ease;
-  text-decoration: none;
-}
-.btn-primary:hover { background: var(--cobalt-dark); transform: translateY(-1px); }
-
-.btn-outline {
-  background: transparent;
-  color: var(--ink);
-  padding: 10px 18px;
-  border-radius: 999px;
-  font-weight: 600;
-  font-size: 14px;
-  border: 1.5px solid var(--line-dark);
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  transition: all 0.18s ease;
-  text-decoration: none;
-}
-.btn-outline:hover { border-color: var(--cobalt); color: var(--cobalt); }
-
-.btn-signal {
-  background: var(--signal);
-  color: var(--on-signal);
-  padding: 10px 18px;
-  border-radius: 999px;
-  font-weight: 700;
-  font-size: 14px;
-  border: none;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  transition: all 0.18s ease;
-  text-decoration: none;
-}
-.btn-signal:hover { background: var(--signal-dark); color: white; }
-
-/* Card hover */
-.card {
-  background: var(--paper-strong);
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  transition: all 0.22s ease;
-}
-.card:hover { border-color: var(--cobalt); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(68, 91, 255, .08); }
-
-/* Fade-in */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-.fade-in { animation: fadeIn 0.35s ease-out; }
-
-/* No-scrollbar utility (for horizontal rows) */
-.no-scrollbar::-webkit-scrollbar { display: none; }
-.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-
-/* Image fade-in */
-img { transition: opacity 0.25s; }

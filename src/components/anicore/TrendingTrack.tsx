@@ -1,0 +1,32 @@
+'use client';
+import Link from 'next/link';
+import { ArrowRight } from 'lucide-react';
+import { AnimeCard } from './AnimeCard';
+import type { Anime } from '@/lib/anicore/db';
+
+interface Props {
+  items: Anime[];
+  viewAllHref?: string;
+}
+
+export function TrendingTrack({ items, viewAllHref = '/library?sort=trending' }: Props) {
+  if (!items?.length) return null;
+  return (
+    <section className="content-section trending-section" id="discover">
+      <div className="section-heading">
+        <div>
+          <p className="section-kicker">Live signal / updated now</p>
+          <h2>Trending across the index</h2>
+        </div>
+        <Link href={viewAllHref} className="text-action" style={{ textDecoration: 'none' }}>
+          View full index <ArrowRight className="w-4 h-4" />
+        </Link>
+      </div>
+      <div className="trending-track">
+        {items.map((a, i) => (
+          <AnimeCard key={`${a.id}-${i}`} anime={a} rank={i + 1} />
+        ))}
+      </div>
+    </section>
+  );
+}
