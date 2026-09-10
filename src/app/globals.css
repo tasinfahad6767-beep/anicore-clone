@@ -5,6 +5,73 @@
 html, body { background: var(--paper); }
 button, a, input, select { font-family: inherit; }
 
+/* Smooth scrolling */
+html { scroll-behavior: smooth; }
+
+/* Refined focus rings */
+*:focus { outline: none; }
+*:focus-visible {
+  outline: 2px solid var(--cobalt);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Page fade-in on navigation */
+@keyframes page-fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+main { animation: page-fade-in 280ms cubic-bezier(0.2, 0.8, 0.2, 1); }
+
+/* Card entrance animation (stagger on load) */
+@keyframes card-rise {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.anime-card {
+  animation: card-rise 380ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.anime-card:nth-child(1) { animation-delay: 0ms; }
+.anime-card:nth-child(2) { animation-delay: 40ms; }
+.anime-card:nth-child(3) { animation-delay: 80ms; }
+.anime-card:nth-child(4) { animation-delay: 120ms; }
+.anime-card:nth-child(5) { animation-delay: 160ms; }
+.anime-card:nth-child(6) { animation-delay: 200ms; }
+.anime-card:nth-child(7) { animation-delay: 240ms; }
+.anime-card:nth-child(8) { animation-delay: 280ms; }
+
+/* Section reveal on scroll */
+@keyframes section-reveal {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.content-section,
+.browse-section,
+.fan-pulse-section,
+.season-section,
+.dataset-section,
+.stats-dashboard,
+.api-workbench {
+  animation: section-reveal 600ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+/* Better image loading */
+img {
+  transition: opacity 240ms ease;
+}
+img[data-loading="true"] { opacity: 0; }
+img[data-loading="false"] { opacity: 1; }
+
+/* Refined scrollbar */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: var(--paper); }
+::-webkit-scrollbar-thumb {
+  background: var(--line-dark);
+  border-radius: 5px;
+  border: 2px solid var(--paper);
+}
+::-webkit-scrollbar-thumb:hover { background: var(--ink-soft); }
+
 /* Line clamp helpers */
 .line-clamp-1, .line-clamp-2, .line-clamp-3, .line-clamp-4 {
   display: -webkit-box;
@@ -26,6 +93,70 @@ button, a, input, select { font-family: inherit; }
   background-size: 200% 100% !important;
   animation: shimmer 1.5s infinite;
 }
+
+/* Polish: better link transitions */
+a {
+  transition: color 180ms ease, border-color 180ms ease;
+}
+
+/* Polish: button press feedback */
+button:active {
+  transform: scale(0.97);
+  transition: transform 80ms ease;
+}
+
+/* Polish: card hover glow on dark sections */
+.season-grid .anime-card:hover .poster-wrap,
+.trending-track .anime-card:hover .poster-wrap {
+  box-shadow: 7px 7px 0 var(--cobalt), 0 12px 28px rgba(68, 91, 255, 0.18);
+}
+
+/* Polish: hero dots smoother */
+.hero-dots button {
+  transition: width 280ms cubic-bezier(0.2, 0.8, 0.2, 1), background 200ms ease;
+}
+
+/* Polish: search results entrance */
+.search-results {
+  animation: card-rise 200ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+/* Polish: detail modal entrance */
+.detail-modal {
+  animation: detail-rise 320ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+@keyframes detail-rise {
+  from { opacity: 0; transform: translateY(16px) scale(0.99); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Polish: episode card hover */
+.episode-item {
+  transition: border-color 200ms ease, transform 200ms ease;
+}
+.episode-item:hover {
+  border-color: var(--cobalt) !important;
+  transform: translateX(4px);
+}
+
+/* Polish: filter panel focus glow */
+.filter-panel input:focus,
+.filter-panel select:focus {
+  box-shadow: 0 0 0 2px rgba(68, 91, 255, 0.15);
+}
+
+/* Polish: genre chip stagger */
+.genre-chips button {
+  animation: card-rise 300ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.genre-chips button:nth-child(1) { animation-delay: 0ms; }
+.genre-chips button:nth-child(2) { animation-delay: 20ms; }
+.genre-chips button:nth-child(3) { animation-delay: 40ms; }
+.genre-chips button:nth-child(4) { animation-delay: 60ms; }
+.genre-chips button:nth-child(5) { animation-delay: 80ms; }
+.genre-chips button:nth-child(6) { animation-delay: 100ms; }
+.genre-chips button:nth-child(7) { animation-delay: 120ms; }
+.genre-chips button:nth-child(8) { animation-delay: 140ms; }
 
 /* ============ Library page (not in anicore.css) ============ */
 .library-hero {

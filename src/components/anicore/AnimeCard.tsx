@@ -30,6 +30,7 @@ function toggleList(id: number): boolean {
 
 export function AnimeCard({ anime, rank, showSources = true, wide = false }: Props) {
   const [inList, setInList] = useState(false);
+  const [imgLoaded, setImgLoaded] = useState(false);
   const title = anime.title_english || anime.title;
 
   useEffect(() => { setInList(isInList(anime.id)); }, [anime.id]);
@@ -50,9 +51,18 @@ export function AnimeCard({ anime, rank, showSources = true, wide = false }: Pro
         style={{ textDecoration: 'none' }}>
         <div className="poster-wrap">
           {anime.poster_url ? (
-            <img src={anime.poster_url} alt="" loading="lazy" />
+            <img
+              src={anime.poster_url}
+              alt=""
+              loading="lazy"
+              onLoad={() => setImgLoaded(true)}
+              style={{ opacity: imgLoaded ? 1 : 0 }}
+            />
           ) : (
             <div className="poster-fallback">{(title || '?').charAt(0)}</div>
+          )}
+          {!imgLoaded && anime.poster_url && (
+            <div className="skeleton" style={{ position: 'absolute', inset: 0 }} />
           )}
           {rank != null && <span className="rank">#{String(rank).padStart(2, '0')}</span>}
           {anime.score_average != null && (

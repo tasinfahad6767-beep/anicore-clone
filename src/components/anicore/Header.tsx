@@ -72,6 +72,32 @@ export function Header() {
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
+  // Keyboard shortcut: / to focus search, Esc to close
+  useEffect(() => {
+    const input = searchRef.current?.querySelector('input');
+    const onKey = (e: KeyboardEvent) => {
+      // Don't trigger if user is already typing in an input/textarea
+      const tag = (e.target as HTMLElement)?.tagName?.toLowerCase();
+      if (tag === 'input' || tag === 'textarea' || tag === 'select') {
+        if (e.key === 'Escape' && input) {
+          input.blur();
+          setSearchOpen(false);
+        }
+        return;
+      }
+      if (e.key === '/' && input) {
+        e.preventDefault();
+        input.focus();
+      }
+      if (e.key === 'Escape') {
+        setSearchOpen(false);
+        setMobileMenu(false);
+      }
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, []);
+
   const submitSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (!q.trim()) return;

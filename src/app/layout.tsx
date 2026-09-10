@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Header } from "@/components/anicore/Header";
 import { Footer } from "@/components/anicore/Footer";
+import { BackToTop } from "@/components/anicore/BackToTop";
 
 export const metadata: Metadata = {
   title: "AniCore — The Living Anime Index",
@@ -31,6 +32,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Header />
         <main id="main-content">{children}</main>
         <Footer />
+        <BackToTop />
       </body>
     </html>
   );
