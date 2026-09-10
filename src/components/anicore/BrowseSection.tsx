@@ -14,7 +14,7 @@ interface Props {
 
 export function BrowseSection({ initialItems, total, genres }: Props) {
   const [items, setItems] = useState<Anime[]>(initialItems || []);
-  const [loading, setLoading] = useState(!initialItems);
+  const [loading, setLoading] = useState(false); // not loading if we have initialItems
   const [page, setPage] = useState(1);
   const [totalState, setTotalState] = useState(total);
   const [sort, setSort] = useState('score');
@@ -22,8 +22,11 @@ export function BrowseSection({ initialItems, total, genres }: Props) {
   const [yearFrom, setYearFrom] = useState('');
   const [genre, setGenre] = useState('');
   const [query, setQuery] = useState('');
+  const [hasInteracted, setHasInteracted] = useState(false);
 
   useEffect(() => {
+    // Skip the initial fetch if we have initialItems and user hasn't interacted yet
+    if (initialItems && !hasInteracted) return;
     setLoading(true);
     const params = new URLSearchParams({ sort, page: String(page), perPage: '24' });
     if (format) params.set('format', format);
@@ -35,7 +38,14 @@ export function BrowseSection({ initialItems, total, genres }: Props) {
       setTotalState(d.pageInfo?.total || 0);
       setLoading(false);
     });
-  }, [sort, page, format, yearFrom, genre, query]);
+  }, [sort, page, format, yearFrom, genre, query, hasInteracted, initialItems]);
+
+  // Mark as interacted when user changes filters
+  const updateSort = (v: string) => { setHasInteracted(true); setSort(v); setPage(1); };
+  const updateFormat = (v: string) => { setHasInteracted(true); setFormat(v); setPage(1); };
+  const updateYearFrom = (v: string) => { setHasInteracted(true); setYearFrom(v); setPage(1); };
+  const updateGenre = (v: string) => { setHasInteracted(true); setGenre(v); setPage(1); };
+  const updateQuery = (v: string) => { setHasInteracted(true); setQuery(v); setPage(1); };
 
   const lastPage = Math.ceil(totalState / 24);
 
@@ -50,11 +60,11 @@ export function BrowseSection({ initialItems, total, genres }: Props) {
       </div>
 
       <FilterPanel
-        sort={sort} setSort={(v) => { setSort(v); setPage(1); }}
-        format={format} setFormat={(v) => { setFormat(v); setPage(1); }}
-        yearFrom={yearFrom} setYearFrom={(v) => { setYearFrom(v); setPage(1); }}
-        query={query} setQuery={(v) => { setQuery(v); setPage(1); }}
-        genre={genre} setGenre={(v) => { setGenre(v); setPage(1); }}
+        sort={sort} setSort={updateSort}
+        format={format} setFormat={updateFormat}
+        yearFrom={yearFrom} setYearFrom={updateYearFrom}
+        query={query} setQuery={updateQuery}
+        genre={genre} setGenre={updateGenre}
         genres={genres}
         total={totalState}
       />
