@@ -40,6 +40,10 @@ export default function StatsPage() {
   const [formats, setFormats] = useState<Array<{ format: string; count: number }>>([]);
   const [animate, setAnimate] = useState(false);
 
+  // Hooks must run unconditionally — call useCountUp with safe value if stats not loaded
+  const targetCount = stats?.animeCount || 0;
+  const orbitCount = useCountUp(targetCount, 1500, animate);
+
   useEffect(() => {
     fetch('/api/stats').then(r => r.json()).then(d => {
       setStats(d.stats);
@@ -60,7 +64,6 @@ export default function StatsPage() {
     </div>
   );
 
-  const orbitCount = useCountUp(stats.animeCount, 1500, animate);
   const maxGenre = Math.max(...genres.map(g => g.count), 1);
   const maxYear = Math.max(...years.map(y => y.count), 1);
 

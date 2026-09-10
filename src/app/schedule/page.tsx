@@ -34,7 +34,7 @@ export default function SchedulePage() {
     }).catch(() => setLoading(false));
   }, []);
 
-  // Build 15-day window: 7 past, today, 7 future
+  // Build 15-day window: 7 past, today, 7 future — must run before any early return
   const days = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -53,13 +53,12 @@ export default function SchedulePage() {
     return arr;
   }, []);
 
-  // Mock episode schedule: each airing anime gets a "next episode" on a random day in window
+  // Mock episode schedule
   const scheduleItems: ScheduleItem[] = useMemo(() => {
     if (!airing.length) return [];
     return airing.flatMap(a => {
-      // Generate 2-3 episodes per anime across the 15-day window
       const eps: ScheduleItem[] = [];
-      const epCount = 2 + Math.floor((a.id % 10) / 4); // 2-4 eps per anime
+      const epCount = 2 + Math.floor((a.id % 10) / 4);
       const baseEp = (a.episode_count || 1) + 1;
       for (let i = 0; i < epCount; i++) {
         const dayIdx = (a.id + i * 5) % days.length;
@@ -87,18 +86,18 @@ export default function SchedulePage() {
     });
   }, [airing, days]);
 
+  if (loading) return (
+    <div className="inner-page schedule-page">
+      <div className="skeleton" style={{ height: 500, margin: 40 }} />
+    </div>
+  );
+
   const todaysEps = scheduleItems.filter(s => s.isToday);
   const windowTotal = scheduleItems.length;
 
   const filteredItems = selectedDay === 'all'
     ? scheduleItems
     : scheduleItems.filter(s => s.dayKey === selectedDay);
-
-  if (loading) return (
-    <div className="inner-page schedule-page">
-      <div className="skeleton" style={{ height: 500, margin: 40 }} />
-    </div>
-  );
 
   return (
     <div className="inner-page schedule-page">
