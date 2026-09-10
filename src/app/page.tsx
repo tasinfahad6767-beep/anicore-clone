@@ -24,15 +24,15 @@ interface HomeData {
   upcoming: Anime[];
   latestSeason: Anime[];
   stats: Stats;
+  genres: GenreCount[];
 }
 
 export default function Home() {
   const [data, setData] = useState<HomeData | null>(null);
-  const [genres, setGenres] = useState<GenreCount[]>([]);
 
   useEffect(() => {
+    // Single API call — /api/home now includes genres too (was 2 separate fetches)
     fetch('/api/home').then(r => r.json()).then(d => setData(d)).catch(() => {});
-    fetch('/api/stats').then(r => r.json()).then(d => setGenres(d.genres || [])).catch(() => {});
   }, []);
 
   if (!data) {
@@ -41,7 +41,7 @@ export default function Home() {
     );
   }
 
-  const { stats, trending, airing, upcoming, latestSeason } = data;
+  const { stats, trending, airing, upcoming, latestSeason, genres = [] } = data;
   const seasonAnime = latestSeason[0];
   const seasonStr = seasonAnime
     ? `${(seasonAnime.season || '').toLowerCase()} ${seasonAnime.season_year || ''}`.trim()
@@ -55,7 +55,7 @@ export default function Home() {
       <MotionFeature stats={stats} />
       <FanPulse airing={airing} upcoming={upcoming} />
       <SeasonSection season={seasonStr} items={latestSeason} />
-      <BrowseSection total={stats.animeCount} genres={genres} />
+      <BrowseSection total={stats.animeCount} genres={genres || []} />
       <DatasetSection stats={stats} />
     </>
   );

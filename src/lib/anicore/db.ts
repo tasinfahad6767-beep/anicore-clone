@@ -12,9 +12,12 @@ function getDbPath() {
 export function getDb() {
   if (!db) {
     const dbPath = getDbPath();
-    db = new Database(dbPath, { readonly: true, fileMustExist: false });
+    db = new Database(dbPath, { readonly: true, fileMustExist: false, timeout: 5000 });
     // Note: journal_mode pragma requires write access, skip for readonly
-    db.pragma('cache_size = -32000'); // 32MB cache
+    db.pragma('cache_size = -64000'); // 64MB cache (doubled)
+    db.pragma('mmap_size = 268435456'); // 256MB memory-mapped I/O
+    db.pragma('temp_store = MEMORY');
+    db.pragma('busy_timeout = 5000'); // wait up to 5s for locks (scraper writes)
   }
   return db;
 }

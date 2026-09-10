@@ -1,18 +1,16 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getDb, parseAnime } from '@/lib/anicore/db';
+import { NextResponse } from 'next/server';
+import { getAiring } from '@/lib/anicore/db';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+export const revalidate = 60;
 
 export async function GET() {
   try {
-    const db = getDb();
-    // Get currently airing anime (status = RELEASING)
-    const rows = db.prepare(
-      `SELECT * FROM anime WHERE status = 'RELEASING' ORDER BY anilist_popularity DESC LIMIT 20`
-    ).all();
-    
-    return NextResponse.json({ items: rows.map(parseAnime) });
+    const items = getAiring(30);
+    return NextResponse.json({ items }, {
+      headers: { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300' },
+    });
   } catch (e: any) {
     return NextResponse.json({ error: e.message, items: [] }, { status: 500 });
   }

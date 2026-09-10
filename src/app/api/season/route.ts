@@ -3,6 +3,7 @@ import { getLatestSeason, getAiring, getUpcoming } from '@/lib/anicore/db';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+export const revalidate = 120;
 
 export async function GET() {
   try {
@@ -15,6 +16,8 @@ export async function GET() {
       items: season,
       airing,
       upcoming,
+    }, {
+      headers: { 'Cache-Control': 'public, s-maxage=120, stale-while-revalidate=600' },
     });
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: 500 });
