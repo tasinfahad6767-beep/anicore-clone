@@ -1,0 +1,20 @@
+[Unit]
+Description=AniCore Scraper — Downloads anime metadata to SQLite
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/root/anicore-clone/scraper
+Environment=ANICORE_DB=/var/lib/luffytv/anicore.db
+Environment=ANICORE_STATE=/var/lib/luffytv/anicore-scraper-state.json
+ExecStart=/usr/bin/python3 /root/anicore-clone/scraper/scrape_anicore.py --resume
+Restart=always
+RestartSec=30
+Nice=19
+CPUQuota=30%
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
