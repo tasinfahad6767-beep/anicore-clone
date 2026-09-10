@@ -6,9 +6,9 @@ import type { Anime } from '@/lib/anicore/db';
 
 interface Props {
   anime: Anime;
-  rank?: number; // 1-based, optional (omit to hide rank)
-  showSources?: boolean; // show source constellation (default true)
-  wide?: boolean; // use anime-card-wide class
+  rank?: number;
+  showSources?: boolean;
+  wide?: boolean;
 }
 
 function isInList(id: number): boolean {
@@ -41,40 +41,38 @@ export function AnimeCard({ anime, rank, showSources = true, wide = false }: Pro
     setInList(toggleList(anime.id));
   };
 
-  // Determine which sources are available based on `sources` field
   const sourcesArr: string[] = anime.sources || [];
   const hasSource = (name: string) => sourcesArr.some(s => typeof s === 'string' ? s.toLowerCase() === name.toLowerCase() : (s as any)?.slug?.toLowerCase() === name.toLowerCase());
 
   return (
     <article className={`anime-card ${wide ? 'anime-card-wide' : ''}`}>
-      <Link href={`/anime/${anime.slug}`} className="card-hit" aria-label={`Open ${title}`}
-        style={{ textDecoration: 'none' }}>
-        <div className="poster-wrap">
-          {anime.poster_url ? (
-            <img
-              src={anime.poster_url}
-              alt=""
-              loading="lazy"
-              onLoad={() => setImgLoaded(true)}
-              style={{ opacity: imgLoaded ? 1 : 0 }}
-            />
-          ) : (
-            <div className="poster-fallback">{(title || '?').charAt(0)}</div>
-          )}
-          {!imgLoaded && anime.poster_url && (
-            <div className="skeleton" style={{ position: 'absolute', inset: 0 }} />
-          )}
-          {rank != null && <span className="rank">#{String(rank).padStart(2, '0')}</span>}
-          {anime.score_average != null && (
-            <span className="score score-compact">
-              <strong>{Math.round(anime.score_average)}</strong>
-            </span>
-          )}
-          <button className={`save-button ${inList ? 'saved' : ''}`} aria-label={`Add ${title} to My List`} onClick={handleList}>
-            {inList ? <Check className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
-          </button>
-        </div>
-      </Link>
+      {/* card-hit is an absolute overlay button (sibling of poster-wrap + card-copy), matching AniCore structure */}
+      <Link href={`/anime/${anime.slug}`} className="card-hit" aria-label={`Open ${title}`} style={{ textDecoration: 'none' }} />
+      <div className="poster-wrap">
+        {anime.poster_url ? (
+          <img
+            src={anime.poster_url}
+            alt=""
+            loading="lazy"
+            onLoad={() => setImgLoaded(true)}
+            style={{ opacity: imgLoaded ? 1 : 0 }}
+          />
+        ) : (
+          <div className="poster-fallback">{(title || '?').charAt(0)}</div>
+        )}
+        {!imgLoaded && anime.poster_url && (
+          <div className="skeleton" style={{ position: 'absolute', inset: 0 }} />
+        )}
+        {rank != null && <span className="rank">#{String(rank).padStart(2, '0')}</span>}
+        {anime.score_average != null && (
+          <span className="score score-compact">
+            <strong>{Math.round(anime.score_average)}</strong>
+          </span>
+        )}
+        <button className={`save-button ${inList ? 'saved' : ''}`} aria-label={`Add ${title} to My List`} onClick={handleList}>
+          {inList ? <Check className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+        </button>
+      </div>
       <div className="card-copy">
         {showSources && (
           <div className="source-constellation">
