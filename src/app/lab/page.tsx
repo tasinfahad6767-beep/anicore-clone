@@ -199,9 +199,9 @@ export default function LabPage() {
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'http://169.58.120.196:3100';
 
   return (
-    <div className="inner-page api-lab-page">
+    <div className="api-lab-page">
       {/* Hero */}
-      <section className="page-hero lab-hero">
+      <section className="page-hero">
         <div>
           <p className="section-kicker">First-party developer workspace</p>
           <h1>Build with the <em>index.</em></h1>
