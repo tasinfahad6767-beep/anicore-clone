@@ -1,84 +1,111 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { AnimeCard } from '@/components/anicore/AnimeCard';
-import { SearchBar } from '@/components/anicore/SearchBar';
+import Link from 'next/link';
+import { HeroCarousel } from '@/components/anicore/HeroCarousel';
+import { AnimeRow } from '@/components/anicore/AnimeRow';
+import { AnimeGrid, AnimeGridSkeleton } from '@/components/anicore/AnimeGrid';
 import { FilterBar } from '@/components/anicore/FilterBar';
-
-interface Anime {
-  id: number; slug: string; title: string; title_english: string | null;
-  poster_url: string | null; score_average: number | null;
-  season_year: number | null; format: string | null;
-  genres: string[]; status: string | null; episode_count: number | null;
-}
+import { Footer } from '@/components/anicore/Footer';
+import { RowSkeleton } from '@/components/anicore/Skeletons';
+import { Pagination } from '@/components/anicore/Pagination';
+import type { Anime } from '@/lib/anicore/db';
 
 export default function Home() {
-  const [anime, setAnime] = useState<Anime[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [homeData, setHomeData] = useState<{
+    trending: Anime[]; popular: Anime[]; topRated: Anime[]; newest: Anime[]; airing: Anime[];
+    stats: { animeCount: number; episodeCount: number; characterCount: number; releasingCount: number };
+  } | null>(null);
+
+  const [libraryItems, setLibraryItems] = useState<Anime[]>([]);
+  const [libraryLoading, setLibraryLoading] = useState(false);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [sort, setSort] = useState('trending');
   const [genre, setGenre] = useState('');
   const [year, setYear] = useState('');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [format, setFormat] = useState('');
+  const [status, setStatus] = useState('');
 
   useEffect(() => {
-    if (searchQuery) {
-      fetch(`/api/search?q=${encodeURIComponent(searchQuery)}&limit=50`)
-        .then(r => r.json())
-        .then(d => { setAnime(d.items || []); setTotal(d.items?.length || 0); setLoading(false); });
-    } else {
-      setLoading(true);
-      fetch(`/api/browse?sort=${sort}&page=${page}&perPage=24${genre ? `&genre=${genre}` : ''}${year ? `&year=${year}` : ''}`)
-        .then(r => r.json())
-        .then(d => { setAnime(d.items || []); setTotal(d.pageInfo?.total || 0); setLoading(false); });
-    }
-  }, [sort, page, genre, year, searchQuery]);
+    fetch('/api/home').then(r => r.json()).then(setHomeData).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    setLibraryLoading(true);
+    fetch(`/api/browse?sort=${sort}&page=${page}&perPage=24${genre ? `&genre=${genre}` : ''}${year ? `&year=${year}` : ''}${format ? `&format=${format}` : ''}${status ? `&status=${status}` : ''}`)
+      .then(r => r.json())
+      .then(d => {
+        setLibraryItems(d.items || []);
+        setTotal(d.pageInfo?.total || 0);
+        setLibraryLoading(false);
+      });
+  }, [sort, page, genre, year, format, status]);
 
   return (
     <div className="min-h-screen bg-[#0a0a0f] text-white">
-      <header className="sticky top-0 z-50 bg-[#0a0a0f]/90 backdrop-blur-xl border-b border-zinc-800">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center gap-4">
-          <h1 className="text-xl font-bold bg-gradient-to-r from-rose-400 to-purple-400 bg-clip-text text-transparent">
-            AniCore
-          </h1>
-          <div className="flex-1 max-w-md">
-            <SearchBar value={searchQuery} onChange={setSearchQuery} />
-          </div>
-        </div>
-      </header>
-
-      <main className="max-w-7xl mx-auto px-4 py-6">
-        {!searchQuery && (
-          <FilterBar sort={sort} setSort={setSort} genre={genre} setGenre={setGenre} year={year} setYear={setYear} />
+      <div className="max-w-[1600px] mx-auto px-4 py-4">
+        {homeData ? (
+          <HeroCarousel items={homeData.trending} />
+        ) : (
+          <div className="h-[460px] md:h-[520px] bg-zinc-900 rounded-xl animate-pulse" />
         )}
+      </div>
 
-        <div className="mb-4 text-sm text-zinc-400">
-          {loading ? 'Loading...' : `${total.toLocaleString()} anime${searchQuery ? ' found' : ''}`}
-        </div>
-
-        {loading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            {Array.from({ length: 12 }).map((_, i) => (
-              <div key={i} className="aspect-[2/3] bg-zinc-900 rounded-lg animate-pulse" />
-            ))}
-          </div>
+      <div className="max-w-[1600px] mx-auto px-4 py-6">
+        {homeData ? (
+          <>
+            {homeData.airing?.length > 0 && (
+              <AnimeRow title="Currently Airing" items={homeData.airing} viewAllHref="/schedule" />
+            )}
+            <AnimeRow title="Trending Now" items={homeData.trending} viewAllHref="/library?sort=trending" />
+            <AnimeRow title="Most Popular" items={homeData.popular} viewAllHref="/library?sort=popular" />
+            <AnimeRow title="Top Rated" items={homeData.topRated} viewAllHref="/library?sort=score" />
+            <AnimeRow title="Newest Releases" items={homeData.newest} viewAllHref="/library?sort=newest" />
+          </>
         ) : (
           <>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-              {anime.map(a => <AnimeCard key={a.id} anime={a} />)}
-            </div>
-            {!searchQuery && total > 24 && (
-              <div className="flex justify-center gap-2 mt-8">
-                <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
-                  className="px-4 py-2 rounded-lg bg-zinc-800 disabled:opacity-30 hover:bg-zinc-700">Prev</button>
-                <span className="px-4 py-2 text-zinc-400">Page {page}</span>
-                <button onClick={() => setPage(p => p + 1)} disabled={anime.length < 24}
-                  className="px-4 py-2 rounded-lg bg-zinc-800 disabled:opacity-30 hover:bg-zinc-700">Next</button>
-              </div>
-            )}
+            <RowSkeleton />
+            <RowSkeleton />
+            <RowSkeleton />
           </>
         )}
-      </main>
+
+        {/* Library section */}
+        <section className="mt-8 pt-6 border-t border-zinc-900">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <h2 className="text-xl font-bold">Browse Library</h2>
+              {total > 0 && (
+                <span className="text-xs text-zinc-500">{total.toLocaleString()} anime</span>
+              )}
+            </div>
+            <Link href="/library" className="text-xs text-rose-400 hover:text-rose-300">
+              Open full library →
+            </Link>
+          </div>
+
+          <FilterBar
+            sort={sort} setSort={setSort}
+            genre={genre} setGenre={(v) => { setGenre(v); setPage(1); }}
+            year={year} setYear={(v) => { setYear(v); setPage(1); }}
+            format={format} setFormat={(v) => { setFormat(v); setPage(1); }}
+            status={status} setStatus={(v) => { setStatus(v); setPage(1); }}
+          />
+
+          {libraryLoading ? (
+            <AnimeGridSkeleton count={18} />
+          ) : libraryItems.length > 0 ? (
+            <>
+              <AnimeGrid items={libraryItems} />
+              <Pagination page={page} lastPage={Math.ceil(total / 24)} onPage={setPage} />
+            </>
+          ) : (
+            <div className="text-center py-12 text-zinc-500 text-sm">No anime match these filters</div>
+          )}
+        </section>
+      </div>
+
+      <Footer stats={homeData?.stats} />
     </div>
   );
 }

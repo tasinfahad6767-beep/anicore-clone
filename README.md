@@ -1,48 +1,82 @@
-# AniCore Clone — The Living Anime Index
+# AniCore Clone
 
-A self-hosted anime database with 32,372 anime, episodes, characters, and more.
-Scraped from [anicore.dpdns.org](https://anicore.dpdns.org) API.
+A self-hosted anime index, clone of [anicore.dpdns.org](https://anicore.dpdns.org). Built with Next.js 16, TypeScript, Tailwind CSS, and SQLite.
 
-## What it does
+## Features
 
-1. **Scraper** (`scraper/scrape_anicore.py`) — Downloads all anime metadata from AniCore's API into SQLite (~3 GB)
-2. **Frontend** (Next.js) — Browse, search, and view anime details
-3. **API** — REST API serving from local SQLite (no external dependencies)
+- **Home page**: Hero carousel + horizontal rows (Trending, Popular, Top Rated, Newest, Airing Now) + library browser
+- **Anime detail page**: Banner hero, poster, scores (AniList/MAL), synopsis (expandable), genres, streaming links, external links, characters grid (filtered by role), relations, recommendations, episodes with thumbnails + synopsis, watch button
+- **Watch page**: HLS.js video player with quality selector, episode sidebar with thumbnails, prev/next navigation
+- **Library page**: Full grid view with sort (trending/popular/score/newest/A-Z) + filters (genre, year, format, status)
+- **Schedule page**: Currently airing anime
+- **Search**: Live dropdown results in header + dedicated search results page
+- **Genre browse**: Browse anime by genre (`/genre/[genre]`)
+- **Surprise me**: Random anime redirect
 
-## Quick Start
+## Tech Stack
 
-### 1. Run the scraper (on VPS)
+- **Framework**: Next.js 16 (App Router, standalone output)
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS 4
+- **Database**: SQLite (read-only via better-sqlite3)
+- **Video**: HLS.js for streaming
+- **Fonts**: Inter
+
+## Database
+
+The app reads from a SQLite database at `/var/lib/luffytv/anicore.db` (production) or `./anicore.db` (local dev). Override with `ANICORE_DB` env var.
+
+Tables: `anime`, `episodes`, `characters`, `streaming_links`, `external_links`, `recommendations`, `relations`.
+
+Run the scraper (`/scraper/scrape_anicore.py`) to populate the database from the AniCore API.
+
+## Development
+
 ```bash
-python3 scraper/scrape_anicore.py --limit 100  # Test with 100 first
-python3 scraper/scrape_anicore.py --resume     # Then scrape all 32k
+# Install deps
+bun install
+
+# Run dev server
+bun run dev
+
+# Build for production
+bun run build
+
+# Run production
+bun run start
 ```
 
-### 2. Run the frontend
+## Deployment (VPS via Coolify)
+
+This app uses `better-sqlite3` (native C++ module) — **Vercel/serverless won't work**. Deploy on your VPS:
+
 ```bash
-npm install
-npm run dev
-# Open http://localhost:3000
+# On your VPS
+git clone https://github.com/tasinfahad6767-beep/anicore-clone.git
+cd anicore-clone
+bun install
+bun run build
+PORT=3000 bun .next/standalone/server.js
 ```
 
-## Data stored (SQLite ~3 GB)
+Or via Coolify: New Resource → App from GitHub → select repo → set port 3000 → mount DB path → deploy.
 
-| Table | Records |
-|-------|---------|
-| anime | 32,372 |
-| episodes | ~970,000 |
-| characters | ~100,000 |
-| streaming_links | ~15,000 |
-| external_links | ~160,000 |
-| recommendations | ~50,000 |
-| relations | ~30,000 |
+## Layout
 
-Images are NOT downloaded — URLs point to Kitsu/AniList/TMDB CDN (free).
-
-## API Endpoints
-
-| Endpoint | Description |
-|----------|-------------|
-| `GET /api/browse?sort=trending&page=1&perPage=24` | Browse anime |
-| `GET /api/anime/{slug}` | Anime details + episodes + characters |
-| `GET /api/search?q=one+piece` | Search by title |
-| `GET /api/airing` | Currently airing anime |
+```
+src/
+  app/
+    layout.tsx              # Root layout with Header
+    page.tsx                # Home page
+    globals.css             # Global styles
+    anime/[slug]/page.tsx   # Anime detail
+    anime/[slug]/watch/page.tsx  # Watch page
+    library/page.tsx        # Browse library
+    schedule/page.tsx       # Airing schedule
+    search/page.tsx         # Search results
+    genre/[genre]/page.tsx  # Genre browse
+    random/page.tsx         # Random redirect
+    api/                    # API routes
+  components/anicore/       # All AniCore components
+  lib/anicore/db.ts         # DB connection + queries + types
+```
