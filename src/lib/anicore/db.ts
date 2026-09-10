@@ -115,12 +115,46 @@ export interface Relation {
 }
 
 // ===================== HELPERS =====================
+function parseGenres(raw: any): string[] {
+  if (!raw) return [];
+  let arr: any;
+  if (typeof raw === 'string') {
+    try { arr = JSON.parse(raw); } catch { return []; }
+  } else if (Array.isArray(raw)) {
+    arr = raw;
+  } else {
+    return [];
+  }
+  return arr
+    .map((g: any) => {
+      if (typeof g === 'string') return g;
+      if (g && typeof g === 'object') return g.name || g.slug || '';
+      return '';
+    })
+    .filter((s: string) => s && s.length > 0);
+}
+
+function parseSources(raw: any): string[] {
+  if (!raw) return [];
+  let arr: any;
+  if (typeof raw === 'string') {
+    try { arr = JSON.parse(raw); } catch { return []; }
+  } else if (Array.isArray(raw)) {
+    arr = raw;
+  } else {
+    return [];
+  }
+  return arr
+    .map((s: any) => typeof s === 'string' ? s : (s?.slug || s?.name || ''))
+    .filter((s: string) => s && s.length > 0);
+}
+
 export function parseAnime(row: any): Anime {
   if (!row) return row;
   return {
     ...row,
-    genres: typeof row.genres === 'string' ? JSON.parse(row.genres || '[]') : row.genres || [],
-    sources: typeof row.sources === 'string' ? JSON.parse(row.sources || '[]') : row.sources || [],
+    genres: parseGenres(row.genres),
+    sources: parseSources(row.sources),
   };
 }
 
@@ -181,8 +215,10 @@ export function listAnime(opts: {
   const params: any[] = [];
 
   if (genre) {
-    where.push('genres LIKE ?');
-    params.push(`%"${genre}"%`);
+    // Match either format: ["Action"] or [{"name":"Action","slug":"action"}]
+    where.push('(genres LIKE ? OR genres LIKE ?)');
+    const slug = genre.toLowerCase().replace(/\s+/g, '-');
+    params.push(`%"${genre}"%`, `%"slug":"${slug}"%`);
   }
   if (year) {
     where.push('season_year = ?');
@@ -267,10 +303,9 @@ export function getDistinctGenres(): string[] {
   const rows = db.prepare(`SELECT DISTINCT genres FROM anime WHERE genres IS NOT NULL`).all() as any[];
   const set = new Set<string>();
   for (const r of rows) {
-    try {
-      const arr: string[] = JSON.parse(r.genres || '[]');
-      arr.forEach(g => set.add(g));
-    } catch {}
+    for (const g of parseGenres(r.genres)) {
+      set.add(g);
+    }
   }
   return Array.from(set).sort();
 }
