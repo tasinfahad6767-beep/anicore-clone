@@ -1,10 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
-import { ArrowRight } from 'lucide-react';
-import { AnimeCard } from '@/components/anicore/AnimeCard';
-import { FanPulse } from '@/components/anicore/FanPulse';
 import { SeasonSection } from '@/components/anicore/SeasonSection';
+import { FanPulse } from '@/components/anicore/FanPulse';
 import type { Anime } from '@/lib/anicore/db';
 
 export default function SeasonPage() {

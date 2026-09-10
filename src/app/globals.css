@@ -496,13 +496,33 @@ button:active {
   padding: 0 40px;
 }
 
-/* Fix season-section grid layout — force 2-column on desktop */
+/* Fix season-section: ensure it's full-width (no inner-page wrapper constraining it)
+   and the grid lays out properly with the 2-column layout from anicore.css */
 .season-section {
-  grid-template-columns: 0.62fr 1.38fr !important;
+  /* anicore.css already sets grid-template-columns: 0.62fr 1.38fr */
+  /* Make sure overflow doesn't break layout */
+  overflow: visible;
+  /* Ensure the section can grow to fit content */
+  min-height: auto;
+}
+/* Season grid cards: ensure proper height */
+.season-grid .poster-wrap {
+  /* padding-top: 142% makes height = 142% of width — standard poster ratio */
+  /* This is already in anicore.css, just make sure it applies */
+  position: relative;
+}
+/* Season grid: force 3 columns on desktop */
+.season-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 @media (max-width: 900px) {
-  .season-section {
-    grid-template-columns: 1fr !important;
+  .season-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 640px) {
+  .season-grid {
+    grid-template-columns: 1fr;
   }
 }
 .schedule-section-header {
