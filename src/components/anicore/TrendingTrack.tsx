@@ -19,7 +19,9 @@ export function TrendingTrack({ items, viewAllHref = '/library?sort=trending' }:
           <h2>Trending across the index</h2>
         </div>
         <Link href={viewAllHref} className="text-action" style={{ textDecoration: 'none' }}>
-          View full index <ArrowRight className="w-4 h-4" />
+          <button type="button" style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', font: 'inherit', color: 'inherit' }}>
+            View full index <ArrowRight className="w-4 h-4" />
+          </button>
         </Link>
       </div>
       <div className="trending-track">

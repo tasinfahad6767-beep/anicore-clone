@@ -111,11 +111,15 @@ export function HeroSpotlight({ items, totalAnime }: Props) {
         </div>
 
         <div className="hero-quick-actions">
-          <Link href="/random">
-            <Sparkles className="w-3.5 h-3.5" /> Pick for me
+          <Link href="/random" style={{ textDecoration: 'none' }}>
+            <button type="button">
+              <Sparkles className="w-3.5 h-3.5" /> Pick for me
+            </button>
           </Link>
-          <Link href="/library">
-            Browse the full catalog <ArrowRight className="w-3.5 h-3.5" />
+          <Link href="/library" style={{ textDecoration: 'none' }}>
+            <button type="button">
+              Browse the full catalog <ArrowRight className="w-3.5 h-3.5" />
+            </button>
           </Link>
         </div>
 
