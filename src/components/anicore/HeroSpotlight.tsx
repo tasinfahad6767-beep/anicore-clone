@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, Shuffle, ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Sparkles, ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { Anime } from '@/lib/anicore/db';
 
 interface Props {
@@ -112,7 +112,7 @@ export function HeroSpotlight({ items, totalAnime }: Props) {
 
         <div className="hero-quick-actions">
           <Link href="/random">
-            <Shuffle className="w-3.5 h-3.5" /> Pick for me
+            <Sparkles className="w-3.5 h-3.5" /> Pick for me
           </Link>
           <Link href="/library">
             Browse the full catalog <ArrowRight className="w-3.5 h-3.5" />

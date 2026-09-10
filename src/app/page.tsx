@@ -49,7 +49,7 @@ export default function Home() {
 
   return (
     <>
-      <HeroSpotlight items={trending.slice(0, 8)} totalAnime={stats.animeCount} />
+      <HeroSpotlight items={trending.slice(0, 7)} totalAnime={stats.animeCount} />
       <IndexStrip stats={stats} />
       <TrendingTrack items={trending} />
       <MotionFeature stats={stats} />

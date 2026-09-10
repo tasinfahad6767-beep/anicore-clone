@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
-import { Search, Moon, Sun, Heart, Plus, Menu, X, Volume2 } from 'lucide-react';
+import { Search, Moon, Sun, Heart, Menu, X, Volume2, VolumeX, ArrowRight } from 'lucide-react';
 
 interface Anime {
   id: number; slug: string; title: string; title_english: string | null;
@@ -24,6 +24,7 @@ export function Header() {
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [listCount, setListCount] = useState(0);
   const [mobileMenu, setMobileMenu] = useState(false);
+  const [soundOn, setSoundOn] = useState(true);
   const [q, setQ] = useState('');
   const [results, setResults] = useState<Anime[]>([]);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -107,9 +108,9 @@ export function Header() {
               <span>Personal controls</span>
               <small>Guest session</small>
             </div>
-            <button type="button" className="mobile-utility">
-              <Volume2 className="w-4 h-4" />
-              <span><strong>Interface sound</strong><small>On</small></span>
+            <button type="button" className="mobile-utility" onClick={() => setSoundOn(s => !s)}>
+              {soundOn ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+              <span><strong>Interface sound</strong><small>{soundOn ? 'On' : 'Off'}</small></span>
             </button>
             <button type="button" className="mobile-utility" onClick={toggleTheme}>
               {theme === 'light' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
@@ -120,18 +121,34 @@ export function Header() {
               <span><strong>My list</strong><small>{listCount} saved titles</small></span>
               <b>{listCount}</b>
             </Link>
+            <Link href="/" className="mobile-account" style={{ textDecoration: 'none' }}>
+              <span><strong>Sign in or create account</strong><small>Sync lists across devices</small></span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
           </div>
         </nav>
 
         <div className="header-actions">
+          <button
+            className="sound-toggle desktop-header-control"
+            type="button"
+            aria-label={soundOn ? 'Mute interface sounds' : 'Unmute interface sounds'}
+            aria-pressed={!soundOn}
+            onClick={() => setSoundOn(s => !s)}
+          >
+            {soundOn ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+          </button>
           <button className="theme-toggle desktop-header-control" type="button" aria-label="Switch theme" onClick={toggleTheme}>
             <span className="theme-toggle-icon">
-              {theme === 'light' ? <Moon className="w-3.5 h-3.5" /> : <Sun className="w-3.5 h-3.5" />}
+              {theme === 'light' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
             </span>
             <span className="theme-toggle-label">{theme === 'light' ? 'Dark' : 'Light'}</span>
           </button>
           <Link href="/list" className="my-list-button desktop-header-control" style={{ textDecoration: 'none' }}>
             <Heart className="w-3.5 h-3.5" /> My List <span>{listCount}</span>
+          </Link>
+          <Link href="/" className="account-button desktop-header-control" style={{ textDecoration: 'none' }}>
+            Sign in
           </Link>
           <button className="mobile-menu" aria-label="Toggle menu" aria-expanded={mobileMenu} onClick={() => setMobileMenu(!mobileMenu)}>
             {mobileMenu ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}

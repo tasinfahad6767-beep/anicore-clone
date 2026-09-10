@@ -162,6 +162,7 @@ export default function AnimeDetail() {
         <nav className="detail-chapters" aria-label={`${a.title} detail sections`}>
           <button type="button" className={activeSection === 'record-overview' ? 'active' : ''} onClick={() => scrollToSection('record-overview')}>Overview</button>
           <button type="button" className={activeSection === 'record-episodes' ? 'active' : ''} onClick={() => scrollToSection('record-episodes')}>Episodes <span>{data.episodes.length}</span></button>
+          <button type="button" className={activeSection === 'record-media' ? 'active' : ''} onClick={() => scrollToSection('record-media')}>Media <span>{(a.banner_url ? 1 : 0) + (a.poster_url ? 1 : 0) + (a.cover_url ? 1 : 0) + (a.logo_url ? 1 : 0)}</span></button>
           <button type="button" className={activeSection === 'record-people' ? 'active' : ''} onClick={() => scrollToSection('record-people')}>People <span>{data.characters.length}</span></button>
           <button type="button" className={activeSection === 'record-franchise' ? 'active' : ''} onClick={() => scrollToSection('record-franchise')}>Franchise <span>{data.relations.length + data.recommendations.length}</span></button>
         </nav>
@@ -233,6 +234,49 @@ export default function AnimeDetail() {
                 </div>
               </section>
             )}
+
+            {/* Media vault */}
+            <section className="detail-section" id="record-media">
+              <div className="section-title-line">
+                <p className="section-kicker">Media vault</p>
+                <h3>Artwork &amp; trailers</h3>
+              </div>
+              <div className="artwork-browser">
+                <div className="artwork-tabs">
+                  <button className="active">Backdrop <span>{a.banner_url ? 1 : 0}</span></button>
+                  <button className="">Poster <span>{a.poster_url ? 1 : 0}</span></button>
+                  <button className="">Cover <span>{a.cover_url ? 1 : 0}</span></button>
+                  <button className="">Logo <span>{a.logo_url ? 1 : 0}</span></button>
+                </div>
+                <div className="artwork-grid artwork-backdrop">
+                  {a.banner_url && (
+                    <a href={a.banner_url} target="_blank" rel="noopener">
+                      <img src={a.banner_url} alt="" loading="lazy" />
+                    </a>
+                  )}
+                  {a.cover_url && (
+                    <a href={a.cover_url} target="_blank" rel="noopener">
+                      <img src={a.cover_url} alt="" loading="lazy" />
+                    </a>
+                  )}
+                  {a.poster_url && (
+                    <a href={a.poster_url} target="_blank" rel="noopener">
+                      <img src={a.poster_url} alt="" loading="lazy" />
+                    </a>
+                  )}
+                </div>
+                {a.trailer_youtube_id && (
+                  <div className="trailer-grid">
+                    <a href={`https://www.youtube.com/watch?v=${a.trailer_youtube_id}`} target="_blank" rel="noopener">
+                      <div>
+                        <img src={`https://img.youtube.com/vi/${a.trailer_youtube_id}/maxresdefault.jpg`} alt="" loading="lazy" />
+                        <span>▶ Trailer</span>
+                      </div>
+                    </a>
+                  </div>
+                )}
+              </div>
+            </section>
 
             {/* People / Characters */}
             {data.characters.length > 0 && (
