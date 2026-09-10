@@ -1,53 +1,99 @@
 'use client';
 import Link from 'next/link';
-import { Star } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Star, Heart, Play } from 'lucide-react';
 import type { Anime } from '@/lib/anicore/db';
 
 interface Props {
   anime: Anime;
   showScore?: boolean;
-  compact?: boolean;
+}
+
+function isInList(id: number): boolean {
+  try { return JSON.parse(localStorage.getItem('anicore-list') || '[]').includes(id); } catch { return false; }
+}
+
+function toggleList(id: number): boolean {
+  try {
+    const list: number[] = JSON.parse(localStorage.getItem('anicore-list') || '[]');
+    const idx = list.indexOf(id);
+    let added: boolean;
+    if (idx >= 0) { list.splice(idx, 1); added = false; }
+    else { list.push(id); added = true; }
+    localStorage.setItem('anicore-list', JSON.stringify(list));
+    window.dispatchEvent(new Event('anicore-list-changed'));
+    return added;
+  } catch { return false; }
 }
 
 export function AnimeCard({ anime, showScore = true }: Props) {
+  const [inList, setInList] = useState(false);
+  const [imgLoaded, setImgLoaded] = useState(false);
   const title = anime.title_english || anime.title;
+
+  useEffect(() => { setInList(isInList(anime.id)); }, [anime.id]);
+
+  const handleList = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setInList(toggleList(anime.id));
+  };
+
   return (
     <Link href={`/anime/${anime.slug}`} className="group block">
-      <div className="relative aspect-[2/3] rounded-lg overflow-hidden bg-zinc-900 border border-zinc-800 group-hover:border-rose-500/50 transition-all duration-300">
+      <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-[var(--paper-strong)] border border-[var(--line)] group-hover:border-[var(--cobalt)] transition-all duration-300">
         {anime.poster_url ? (
           <img
             src={anime.poster_url}
             alt={title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            className={`w-full h-full object-cover transition-all duration-500 ${imgLoaded ? 'opacity-100' : 'opacity-0'} group-hover:scale-105`}
             loading="lazy"
+            onLoad={() => setImgLoaded(true)}
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-zinc-700 text-xs p-2 text-center">{title}</div>
+          <div className="w-full h-full flex items-center justify-center text-[var(--ink-soft)] text-xs p-2 text-center font-mono">{title}</div>
         )}
 
-        {/* Top badges */}
-        <div className="absolute top-1.5 left-1.5 right-1.5 flex items-start justify-between">
-          {showScore && anime.score_average ? (
-            <span className="bg-black/80 backdrop-blur px-1.5 py-0.5 rounded text-[10px] font-bold text-amber-400 flex items-center gap-0.5">
-              <Star className="w-2.5 h-2.5 fill-amber-400" /> {anime.score_average.toFixed(1)}
-            </span>
-          ) : <span />}
-          {anime.status === 'RELEASING' && (
-            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse shadow-lg shadow-green-500/50" />
-          )}
-        </div>
+        {/* Score pill top-left */}
+        {showScore && anime.score_average && (
+          <div className="absolute top-2 left-2 flex items-center gap-1 px-2 py-0.5 rounded-full bg-[var(--paper-strong)]/95 backdrop-blur text-[10px] font-mono font-bold text-[var(--ink)]">
+            <Star className="w-2.5 h-2.5 fill-[var(--yellow)] text-[var(--yellow)]" />
+            {(anime.score_average).toFixed(0)}
+          </div>
+        )}
 
-        {/* Hover overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-        <div className="absolute bottom-0 left-0 right-0 p-2 opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-300">
-          <div className="text-xs font-semibold text-white line-clamp-2 leading-tight">{title}</div>
-          <div className="text-[10px] text-zinc-400 mt-0.5">{anime.season_year || '?'} · {anime.format || 'TV'}</div>
+        {/* Airing badge top-right */}
+        {anime.status === 'RELEASING' && (
+          <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[var(--signal)] shadow-[0_0_8px_var(--signal)] animate-pulse" />
+        )}
+
+        {/* My List button */}
+        <button
+          onClick={handleList}
+          aria-label={`Add ${title} to My List`}
+          className={`absolute bottom-2 right-2 w-8 h-8 rounded-full backdrop-blur flex items-center justify-center transition-all ${
+            inList
+              ? 'bg-[var(--signal)] text-[var(--on-signal)] opacity-100'
+              : 'bg-[var(--paper-strong)]/85 text-[var(--ink)] opacity-0 group-hover:opacity-100 hover:bg-[var(--signal)] hover:text-[var(--on-signal)]'
+          }`}
+        >
+          <Heart className={`w-3.5 h-3.5 ${inList ? 'fill-current' : ''}`} />
+        </button>
+
+        {/* Play overlay on hover */}
+        <div className="absolute inset-0 bg-[var(--ink)]/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+          <div className="w-12 h-12 rounded-full bg-[var(--cobalt)] flex items-center justify-center transform scale-90 group-hover:scale-100 transition-transform">
+            <Play className="w-5 h-5 fill-white text-white ml-0.5" />
+          </div>
         </div>
       </div>
-      <div className="mt-1.5 px-0.5">
-        <div className="text-xs font-medium truncate text-zinc-200 group-hover:text-rose-400 transition-colors">{title}</div>
-        <div className="text-[10px] text-zinc-500 truncate">
-          {anime.season_year || '?'} · {anime.format || 'TV'} · {anime.episode_count || anime.episodes_known || '?'} eps
+
+      <div className="mt-2 px-0.5">
+        <div className="font-body text-xs font-semibold truncate text-[var(--ink)] group-hover:text-[var(--cobalt)] transition-colors">
+          {title}
+        </div>
+        <div className="font-mono text-[10px] text-[var(--ink-soft)] uppercase tracking-wider mt-0.5 truncate">
+          {anime.season_year || '—'} · {anime.format || 'TV'} · {anime.episode_count || '?'} eps
         </div>
       </div>
     </Link>

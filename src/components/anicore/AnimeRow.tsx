@@ -1,11 +1,19 @@
 'use client';
 import { useRef } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { AnimeCard } from './AnimeCard';
 import type { Anime } from '@/lib/anicore/db';
 
-export function AnimeRow({ title, items, viewAllHref }: { title: string; items: Anime[]; viewAllHref?: string }) {
+interface Props {
+  title: string;
+  kicker?: string;
+  description?: string;
+  items: Anime[];
+  viewAllHref?: string;
+}
+
+export function AnimeRow({ title, kicker, description, items, viewAllHref }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   if (!items?.length) return null;
@@ -13,27 +21,28 @@ export function AnimeRow({ title, items, viewAllHref }: { title: string; items: 
   const scroll = (dir: 'left' | 'right') => {
     if (!scrollRef.current) return;
     const w = scrollRef.current.clientWidth;
-    scrollRef.current.scrollBy({ left: dir === 'left' ? -w * 0.8 : w * 0.8, behavior: 'smooth' });
+    scrollRef.current.scrollBy({ left: dir === 'left' ? -w * 0.85 : w * 0.85, behavior: 'smooth' });
   };
 
   return (
-    <section className="mb-8">
-      <div className="flex items-center justify-between mb-3 px-1">
-        <div className="flex items-center gap-3">
-          <h2 className="text-lg md:text-xl font-bold text-white">{title}</h2>
-          <span className="text-xs text-zinc-500">{items.length}</span>
+    <section className="my-8 md:my-12">
+      <div className="flex items-start justify-between gap-4 mb-4 px-1">
+        <div className="min-w-0">
+          {kicker && <p className="section-kicker">{kicker}</p>}
+          <h2 className="font-display text-xl md:text-2xl font-bold text-[var(--ink)] leading-tight">{title}</h2>
+          {description && <p className="text-sm text-[var(--ink-soft)] mt-1 max-w-2xl">{description}</p>}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           {viewAllHref && (
-            <Link href={viewAllHref} className="text-xs text-rose-400 hover:text-rose-300 hidden sm:block">View all →</Link>
+            <Link href={viewAllHref} className="font-mono text-[11px] uppercase tracking-wider text-[var(--cobalt)] hover:text-[var(--cobalt-dark)] hidden sm:block">View all →</Link>
           )}
           <div className="flex gap-1">
-            <button onClick={() => scroll('left')}
-              className="w-8 h-8 rounded-lg bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 flex items-center justify-center text-zinc-400 hover:text-white">
+            <button onClick={() => scroll('left')} aria-label="Scroll left"
+              className="w-8 h-8 rounded-lg bg-[var(--paper-strong)] border border-[var(--line)] hover:border-[var(--cobalt)] hover:text-[var(--cobalt)] flex items-center justify-center text-[var(--ink-soft)]">
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <button onClick={() => scroll('right')}
-              className="w-8 h-8 rounded-lg bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 flex items-center justify-center text-zinc-400 hover:text-white">
+            <button onClick={() => scroll('right')} aria-label="Scroll right"
+              className="w-8 h-8 rounded-lg bg-[var(--paper-strong)] border border-[var(--line)] hover:border-[var(--cobalt)] hover:text-[var(--cobalt)] flex items-center justify-center text-[var(--ink-soft)]">
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
@@ -41,10 +50,10 @@ export function AnimeRow({ title, items, viewAllHref }: { title: string; items: 
       </div>
 
       <div ref={scrollRef}
-        className="flex gap-4 overflow-x-auto pb-2 scroll-smooth snap-x"
-        style={{ scrollbarWidth: 'thin' }}>
-        {items.map(a => (
-          <div key={a.id} className="snap-start shrink-0 w-[140px] md:w-[160px]">
+        className="flex gap-4 overflow-x-auto no-scrollbar pb-2"
+        style={{ scrollSnapType: 'x mandatory' }}>
+        {items.map((a, i) => (
+          <div key={`${a.id}-${i}`} className="snap-start shrink-0 w-[150px] md:w-[170px]">
             <AnimeCard anime={a} />
           </div>
         ))}

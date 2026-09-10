@@ -298,6 +298,61 @@ export function getAiring(limit = 30) {
   ).all(limit).map(parseAnime);
 }
 
+export function getUpcoming(limit = 20) {
+  const db = getDb();
+  return db.prepare(
+    `SELECT * FROM anime WHERE status = 'NOT_YET_RELEASED' ORDER BY season_year ASC, season ASC LIMIT ?`
+  ).all(limit).map(parseAnime);
+}
+
+export function getByYear(year: number, limit = 24) {
+  const db = getDb();
+  return db.prepare(
+    `SELECT * FROM anime WHERE season_year = ? ORDER BY anilist_popularity DESC LIMIT ?`
+  ).all(year, limit).map(parseAnime);
+}
+
+export function getLatestSeason(limit = 24) {
+  const db = getDb();
+  // Find the most recent season_year that has anime, return them sorted by popularity
+  return db.prepare(
+    `SELECT * FROM anime WHERE season_year = (SELECT MAX(season_year) FROM anime WHERE season_year IS NOT NULL AND season_year <= strftime('%Y', 'now') + 1) ORDER BY anilist_popularity DESC NULLS LAST LIMIT ?`
+  ).all(limit).map(parseAnime);
+}
+
+export function getTopByGenre(genre: string, limit = 12) {
+  const db = getDb();
+  const slug = genre.toLowerCase().replace(/\s+/g, '-');
+  return db.prepare(
+    `SELECT * FROM anime WHERE genres LIKE ? OR genres LIKE ? ORDER BY anilist_popularity DESC LIMIT ?`
+  ).all(`%"${genre}"%`, `%"slug":"${slug}"%`, limit).map(parseAnime);
+}
+
+export function getGenreStats(): Array<{ genre: string; count: number }> {
+  const db = getDb();
+  const rows = db.prepare(`SELECT genres FROM anime WHERE genres IS NOT NULL`).all() as any[];
+  const counts = new Map<string, number>();
+  for (const r of rows) {
+    let arr: any[] = [];
+    if (typeof r.genres === 'string') { try { arr = JSON.parse(r.genres); } catch {} }
+    else if (Array.isArray(r.genres)) arr = r.genres;
+    for (const g of arr) {
+      const name = typeof g === 'string' ? g : (g?.name || '');
+      if (name) counts.set(name, (counts.get(name) || 0) + 1);
+    }
+  }
+  return Array.from(counts.entries())
+    .map(([genre, count]) => ({ genre, count }))
+    .sort((a, b) => b.count - a.count);
+}
+
+export function getYearDistribution(): Array<{ year: number; count: number }> {
+  const db = getDb();
+  return db.prepare(
+    `SELECT season_year as year, COUNT(*) as count FROM anime WHERE season_year IS NOT NULL GROUP BY season_year ORDER BY season_year DESC LIMIT 30`
+  ).all() as Array<{ year: number; count: number }>;
+}
+
 export function getDistinctGenres(): string[] {
   const db = getDb();
   const rows = db.prepare(`SELECT DISTINCT genres FROM anime WHERE genres IS NOT NULL`).all() as any[];
